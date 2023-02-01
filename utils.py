@@ -98,7 +98,7 @@ def cal_metrics(y_test, y_pred, y_pred_probabilities, classifier):
     # print("Confusion Matrix: ",
     #     confusion_matrix(y_test, y_pred))
 
-    precision = precision_score(y_test,y_pred)*100
+    precision = precision_score(y_test,y_pred, pos_label=1, average='binary')*100
     # print ("Precision : ", precision)
 
     recall = recall_score(y_test,y_pred)*100

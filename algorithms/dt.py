@@ -3,8 +3,10 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.inspection import permutation_importance
+from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
+from data_pre import load_normalized_dataset, split_data_in_testing_training
 from utils import split_data, cal_metrics, prediction, appendMetricsTOCSV
 import time
 import matplotlib.pyplot as plt
@@ -12,220 +14,219 @@ from itertools import chain
 
 
 
-def run_top_20_DT_configs(df, filename='', stratify=True, train_size=0.8,
+def run_top_20_DT_configs(filename='', path = '', stratify=True, train_size=0.8,
                            normalize_data=True, scaler='min-max', n_rep=100):
-    y = df['label'].copy()
-    X = df.drop('label', axis=1).copy()
+    y, X = load_normalized_dataset(file = None, normalize = normalize_data, scaler=scaler)
     metrics = init_metrics_for_DT()
 
     # full_path_filename = '/content/drive/MyDrive/code/' + filename
-    path_to_script = os.path.dirname(os.path.abspath(__file__))
-    my_filename = os.path.join(path_to_script, 'dt', filename)
+    # path_to_script = os.path.dirname(os.path.abspath(__file__))
+    my_filename = os.path.join(path, 'results\\dt', filename)
 
     for i in range(1, n_rep):
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 11, max_depth = 11, max_leaf_nodes = 40, min_samples_split = 2, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 11, max_depth=11,
                                        max_leaf_nodes=40, min_samples_split = 2, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 12, max_depth = 10, max_leaf_nodes = 40, min_samples_split = 20, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 12, max_depth=10,
                                        max_leaf_nodes=40, min_samples_split = 20, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 13, max_depth = 20, max_leaf_nodes = 70, min_samples_split = 20, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 13, max_depth=20,
                                        max_leaf_nodes=70, min_samples_split = 20, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 13, max_depth = 87, max_leaf_nodes = 30, min_samples_split = 6, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 13, max_depth=87,
                                        max_leaf_nodes=30, min_samples_split = 6, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, GINI, min_samples_leaf=11, max_depth = 89, max_leaf_nodes = 80, min_samples_split=8, class_weight = balanced',
                                        X, y, criterion='gini', min_samples_leaf = 11, max_depth=89,
                                        max_leaf_nodes=80, min_samples_split = 8, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 12, max_depth = 20, max_leaf_nodes = 40, min_samples_split = 8, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 12, max_depth=20,
                                        max_leaf_nodes=40, min_samples_split = 8, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 11, max_depth = 30, max_leaf_nodes = 60, min_samples_split = 20, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 11, max_depth=30,
                                        max_leaf_nodes=60, min_samples_split = 20, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 14, max_depth = 25, max_leaf_nodes = 70, min_samples_split = 2, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 14, max_depth=25,
                                        max_leaf_nodes=70, min_samples_split = 2, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, GINI, min_samples_leaf=12, max_depth = 87, max_leaf_nodes = 70, min_samples_split=4, class_weight = balanced',
                                        X, y, criterion='gini', min_samples_leaf = 12, max_depth=87,
                                        max_leaf_nodes=70, min_samples_split = 4, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 10, max_depth = 85, max_leaf_nodes = 50, min_samples_split = 2, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 10, max_depth=85,
                                        max_leaf_nodes=50, min_samples_split = 2, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 14, max_depth = 87, max_leaf_nodes = 80, min_samples_split = 4, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 14, max_depth=87,
                                        max_leaf_nodes=80, min_samples_split = 4, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 13, max_depth = 12, max_leaf_nodes = 30, min_samples_split = 20, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 13, max_depth=12,
                                        max_leaf_nodes=30, min_samples_split = 20, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
 
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 10, max_depth = 14, max_leaf_nodes = 60, min_samples_split = 8, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 10, max_depth=14,
                                        max_leaf_nodes=60, min_samples_split = 8, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 12, max_depth = 87, max_leaf_nodes = 30, min_samples_split = 2, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 12, max_depth=87,
                                        max_leaf_nodes=30, min_samples_split = 2, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, GINI, min_samples_leaf=13, max_depth = 87, max_leaf_nodes = 70, min_samples_split=30, class_weight = balanced',
                                        X, y, criterion='gini', min_samples_leaf = 13, max_depth=87,
                                        max_leaf_nodes=70, min_samples_split = 30, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 10, max_depth = 12, max_leaf_nodes = 40, min_samples_split = 8, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 10, max_depth=12,
                                        max_leaf_nodes=40, min_samples_split = 8, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 10, max_depth = 14, max_leaf_nodes = 30, min_samples_split = 20, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 10, max_depth=14,
                                        max_leaf_nodes=30, min_samples_split = 20, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, GINI, min_samples_leaf=10, max_depth = 35, max_leaf_nodes = 30, min_samples_split=6, class_weight = balanced',
                                        X, y, criterion='gini', min_samples_leaf = 10, max_depth=35,
                                        max_leaf_nodes=30, min_samples_split = 6, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 10, max_depth = 30, max_leaf_nodes = 80, min_samples_split = 8, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 10, max_depth=30,
                                        max_leaf_nodes=80, min_samples_split = 8, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 11, max_depth = 20, max_leaf_nodes = 40, min_samples_split = 20, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 11, max_depth=20,
                                        max_leaf_nodes=40, min_samples_split = 20, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
 
 
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 11, max_depth = 10, max_leaf_nodes = 70, min_samples_split = 4, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 11, max_depth=10,
                                        max_leaf_nodes=70, min_samples_split = 4, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 13, max_depth = 12, max_leaf_nodes = 30, min_samples_split = 8, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 13, max_depth=12,
                                        max_leaf_nodes=30, min_samples_split = 8, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 13, max_depth = 87, max_leaf_nodes = 70, min_samples_split = 10, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 13, max_depth=87,
                                        max_leaf_nodes=70, min_samples_split = 10, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 14, max_depth = 12, max_leaf_nodes = 40, min_samples_split = 20, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 14, max_depth=12,
                                        max_leaf_nodes=40, min_samples_split = 20, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 11, max_depth = 89, max_leaf_nodes = 40, min_samples_split = 6, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 11, max_depth=89,
                                        max_leaf_nodes=40, min_samples_split = 6, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 11, max_depth = 14, max_leaf_nodes = 60, min_samples_split = 4, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 11, max_depth=14,
                                        max_leaf_nodes=60, min_samples_split = 4, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 10, max_depth = 25, max_leaf_nodes = 80, min_samples_split = 10, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 10, max_depth=25,
                                        max_leaf_nodes=80, min_samples_split = 10, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, GINI, min_samples_leaf=10, max_depth = 85, max_leaf_nodes = 50, min_samples_split=6, class_weight = balanced',
                                        X, y, criterion='gini', min_samples_leaf = 10, max_depth=85,
                                        max_leaf_nodes=50, min_samples_split = 6, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 12, max_depth = 20, max_leaf_nodes = 80, min_samples_split = 6, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 12, max_depth=20,
                                        max_leaf_nodes=80, min_samples_split = 6, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 13, max_depth = 11, max_leaf_nodes = 80, min_samples_split = 4, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 13, max_depth=11,
                                        max_leaf_nodes=80, min_samples_split = 4, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 11, max_depth = 25, max_leaf_nodes = 60, min_samples_split = 40, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 11, max_depth=25,
                                        max_leaf_nodes=60, min_samples_split = 40, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, GINI, min_samples_leaf=10, max_depth = 85, max_leaf_nodes = 50, min_samples_split=8, class_weight = balanced',
                                        X, y, criterion='gini', min_samples_leaf = 10, max_depth=85,
                                        max_leaf_nodes=50, min_samples_split = 8, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 11, max_depth = 11, max_leaf_nodes = 40, min_samples_split = 20, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 11, max_depth=11,
                                        max_leaf_nodes=40, min_samples_split = 20, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 10, max_depth = 91, max_leaf_nodes = 50, min_samples_split = 10, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 10, max_depth=91,
                                        max_leaf_nodes=50, min_samples_split = 10, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, GINI, min_samples_leaf=11, max_depth = 91, max_leaf_nodes = 20, min_samples_split=80, class_weight = balanced',
                                        X, y, criterion='gini', min_samples_leaf = 11, max_depth=91,
                                        max_leaf_nodes=20, min_samples_split = 80, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 14, max_depth = 20, max_leaf_nodes = 40, min_samples_split = 20, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 14, max_depth=20,
                                        max_leaf_nodes=40, min_samples_split = 20, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 11, max_depth = 93, max_leaf_nodes = 50, min_samples_split = 4, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 11, max_depth=93,
                                        max_leaf_nodes=50, min_samples_split = 4, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 12, max_depth = 35, max_leaf_nodes = 80, min_samples_split = 30, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 12, max_depth=35,
                                        max_leaf_nodes=80, min_samples_split = 30, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 12, max_depth = 85, max_leaf_nodes = 40, min_samples_split = 40, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 12, max_depth=85,
                                        max_leaf_nodes=40, min_samples_split = 40, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
         run_algorithm_dt_configuration(metrics,
                                        'DT, ENTROPY, min_samples_leaf= 12, max_depth = 35, max_leaf_nodes = 40, min_samples_split = 20, class_weight = balanced',
                                        X, y, criterion='entropy', min_samples_leaf = 12, max_depth=35,
                                        max_leaf_nodes=40, min_samples_split = 20, class_weight = 'balanced',
-                                       stratify=stratify, train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                       stratify=stratify, train_size=train_size)
 
 
     metrics_df = pd.DataFrame(metrics)
@@ -299,11 +300,9 @@ def run_algorithm_dt_configuration(metrics, label, X, y, criterion='gini',
                                    min_samples_split=2, min_weight_fraction_leaf=0.0,
                                    max_features=None, max_leaf_nodes=None, min_impurity_decrease=0.0,
                                    class_weight=None, ccp_alpha=0.0,
-                                   train_size=0.8, stratify=False,
-                                   normalize_data=False, scaler='min-max'
+                                   train_size=0.8, stratify=False
                                    ):
-    X_train, X_test, y_train, y_test = split_data(X, y, normalize_data=normalize_data, stratify=stratify,
-                                                  train_size=train_size, scaler=scaler);
+    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
 
     # Creating the classifier object
     classifier = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, min_samples_leaf=min_samples_leaf,
@@ -350,13 +349,13 @@ def init_metrics_for_DT():
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
 
-def run_algorithm_dt(df, filename='', stratify=False, train_size=0.8, normalize_data=False, scaler='min-max'):
-    y = df['label'].copy()
-    X = df.drop('label', axis=1).copy()
+def run_algorithm_dt(filename='', path = '', stratify=False, train_size=0.8,
+                     normalize_data=False, scaler='min-max'):
+    y, X = load_normalized_dataset(file = None, normalize = normalize_data, scaler=scaler)
     metrics = init_metrics_for_DT()
 
-    path_to_script = os.path.dirname(os.path.abspath(__file__))
-    my_filename = os.path.join(path_to_script, 'dt', filename)
+    # path_to_script = os.path.dirname(os.path.abspath(__file__))
+    my_filename = os.path.join(path, 'results\\dt', filename)
 
     # GINI - Equivalent for islam2019mapreduce
     # run_algorithm_dt_configuration(metrics, 'DT, GINI, min_samples_leaf=32, max_depth = 12', X, y, criterion='gini',
@@ -373,17 +372,17 @@ def run_algorithm_dt(df, filename='', stratify=False, train_size=0.8, normalize_
     #     run_algorithm_dt_configuration(metrics,
     #                                    'DT, ENTROPY, min_samples_leaf=' + str(min_samples_leaf) + ', max_depth = 12', X,
     #                                    y, criterion='entropy', min_samples_leaf=min_samples_leaf, stratify=stratify,
-    #                                    train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                    train_size=train_size)
     #     run_algorithm_dt_configuration(metrics,
     #                                    'DT, GINI, min_samples_leaf=' + str(min_samples_leaf) + ', max_depth = 12', X, y,
     #                                    criterion='gini', min_samples_leaf=min_samples_leaf, stratify=stratify,
-    #                                    train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                    train_size=train_size)
     #
     # # CALIBRATING max_depth param + GINI/ENTROPY
     # for max_depth in range(1, 100):
     #     run_algorithm_dt_configuration(metrics, 'DT, ENTROPY, min_samples_leaf= 32, max_depth = ' + str(max_depth), X,
     #                                    y, criterion='entropy', max_depth=max_depth, stratify=stratify,
-    #                                    train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                    train_size=train_size)
     #     run_algorithm_dt_configuration(metrics, 'DT, GINI, min_samples_leaf=32, max_depth = ' + str(max_depth), X, y,
     #                                    criterion='gini', max_depth=max_depth, stratify=stratify, train_size=train_size,
     #                                    normalize_data=normalize_data, scaler=scaler)
@@ -407,12 +406,12 @@ def run_algorithm_dt(df, filename='', stratify=False, train_size=0.8, normalize_
     #                                    'DT, ENTROPY, min_samples_leaf= 32, max_depth = 12, min_weight_fraction_leaf = ' + str(
     #                                        min_weight_fraction_leaf), X, y, criterion='entropy',
     #                                    min_weight_fraction_leaf=min_weight_fraction_leaf, stratify=stratify,
-    #                                    train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                    train_size=train_size)
     #     run_algorithm_dt_configuration(metrics,
     #                                    'DT, GINI, min_samples_leaf=32, max_depth =12, min_weight_fraction_leaf = ' + str(
     #                                        min_weight_fraction_leaf), X, y, criterion='gini',
     #                                    min_weight_fraction_leaf=min_weight_fraction_leaf, stratify=stratify,
-    #                                    train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                    train_size=train_size)
     #
     # # CALIBRATING max_features param + ENTROPY/GINI
     # for max_features in range(1, 20):
@@ -426,19 +425,19 @@ def run_algorithm_dt(df, filename='', stratify=False, train_size=0.8, normalize_
     #                                    normalize_data=normalize_data, scaler=scaler)
     # run_algorithm_dt_configuration(metrics, 'DT, ENTROPY, min_samples_leaf= 32, max_depth = 12, max_features = log2', X,
     #                                y, criterion='entropy', max_features='log2', stratify=stratify,
-    #                                train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                train_size=train_size)
     # run_algorithm_dt_configuration(metrics, 'DT, GINI, min_samples_leaf=32, max_depth =12, max_features = log2', X, y,
     #                                criterion='gini', max_features='log2', stratify=stratify, train_size=train_size,
     #                                normalize_data=normalize_data, scaler=scaler)
     # run_algorithm_dt_configuration(metrics, 'DT, ENTROPY, min_samples_leaf= 32, max_depth = 12, max_features = auto', X,
     #                                y, criterion='entropy', max_features='auto', stratify=stratify,
-    #                                train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                train_size=train_size)
     # run_algorithm_dt_configuration(metrics, 'DT, GINI, min_samples_leaf=32, max_depth =12, max_features = auto', X, y,
     #                                criterion='gini', max_features='auto', stratify=stratify, train_size=train_size,
     #                                normalize_data=normalize_data, scaler=scaler)
     # run_algorithm_dt_configuration(metrics, 'DT, ENTROPY, min_samples_leaf= 32, max_depth = 12, max_features = sqrt', X,
     #                                y, criterion='entropy', max_features='sqrt', stratify=stratify,
-    #                                train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                train_size=train_size)
     # run_algorithm_dt_configuration(metrics, 'DT, GINI, min_samples_leaf=32, max_depth =12, max_features = sqrt', X, y,
     #                                criterion='gini', max_features='sqrt', stratify=stratify, train_size=train_size,
     #                                normalize_data=normalize_data, scaler=scaler)
@@ -452,7 +451,7 @@ def run_algorithm_dt(df, filename='', stratify=False, train_size=0.8, normalize_
     #                                    scaler=scaler)
     #     run_algorithm_dt_configuration(metrics, 'DT, GINI, min_samples_leaf=32, max_depth =12, max_leaf_nodes = ' + str(
     #         max_leaf_nodes), X, y, criterion='gini', max_leaf_nodes=max_leaf_nodes, stratify=stratify,
-    #                                    train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                    train_size=train_size)
     #
     # # CALIBRATING min_impurity_decrease param + ENTROPY/GINI
     # for min_impurity_decrease in range(0, len(X), 20):
@@ -460,21 +459,21 @@ def run_algorithm_dt(df, filename='', stratify=False, train_size=0.8, normalize_
     #                                    'DT, ENTROPY, min_samples_leaf= 32, max_depth = 12, min_impurity_decrease = ' + str(
     #                                        min_impurity_decrease), X, y, criterion='entropy',
     #                                    min_impurity_decrease=min_impurity_decrease, stratify=stratify,
-    #                                    train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                    train_size=train_size)
     #     run_algorithm_dt_configuration(metrics,
     #                                    'DT, GINI, min_samples_leaf=32, max_depth =12, min_impurity_decrease = ' + str(
     #                                        min_impurity_decrease), X, y, criterion='gini',
     #                                    min_impurity_decrease=min_impurity_decrease, stratify=stratify,
-    #                                    train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                    train_size=train_size)
     #
     # # CALIBRATING class_weight param + ENTROPY/GINI
     # run_algorithm_dt_configuration(metrics,
     #                                'DT, ENTROPY, min_samples_leaf= 32, max_depth = 12, class_weight = balanced', X, y,
     #                                criterion='entropy', class_weight='balanced', stratify=stratify,
-    #                                train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                train_size=train_size)
     # run_algorithm_dt_configuration(metrics, 'DT, GINI, min_samples_leaf=32, max_depth =12, class_weight = balanced', X,
     #                                y, criterion='gini', class_weight='balanced', stratify=stratify,
-    #                                train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                train_size=train_size)
     #
     # # CALIBRATING ccp_alpha param + ENTROPY/GINI
     # for ccp_alpha in [0.0, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 1]:
@@ -484,9 +483,9 @@ def run_algorithm_dt(df, filename='', stratify=False, train_size=0.8, normalize_
     #     run_algorithm_dt_configuration(metrics,
     #                                    'DT, GINI, min_samples_leaf=32, max_depth =12, ccp_alpha = ' + str(ccp_alpha), X,
     #                                    y, criterion='gini', ccp_alpha=ccp_alpha, stratify=stratify,
-    #                                    train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+    #                                    train_size=train_size)
 
-    # TODO: our proposed DT and class_weigth = balanced
+    # TODO: our proposed DT more on it
     concatenated_min_samples_leaf = chain(range(10, 15), range(30, 35))
     #  10
     for min_samples_leaf in concatenated_min_samples_leaf:
@@ -508,7 +507,7 @@ def run_algorithm_dt(df, filename='', stratify=False, train_size=0.8, normalize_
                                                    max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
                                                    min_samples_leaf=min_samples_leaf, class_weight='balanced',
                                                    stratify=stratify,
-                                                   train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                                   train_size=train_size)
                     run_algorithm_dt_configuration(metrics, 'DT, GINI, min_samples_leaf='
                                                    + str(min_samples_leaf) + ', max_depth = ' + str(max_depth) +
                                                    ', max_leaf_nodes = ' + str(max_leaf_nodes) + ', min_samples_split=' +
@@ -518,9 +517,6 @@ def run_algorithm_dt(df, filename='', stratify=False, train_size=0.8, normalize_
                                                    max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
                                                    min_samples_leaf=min_samples_leaf, class_weight='balanced',
                                                    stratify=stratify,
-                                                   train_size=train_size, normalize_data=normalize_data, scaler=scaler)
+                                                   train_size=train_size)
                 metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_DT)
 
-    # export metrics to CSV FILE
-    # df_metrics = pd.DataFrame(metrics)
-    # df_metrics.to_csv(filename, encoding='utf-8', index= True)
