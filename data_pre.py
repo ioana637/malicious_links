@@ -10,7 +10,6 @@ import pandas as pd
 
 
 # 1. Load original dataset
-from IPython.core.display import display
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 

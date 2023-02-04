@@ -19,7 +19,7 @@ def run_top_20_RFC_configs(filename='', path='', stratify=False, train_size=0.8,
 
     # full_path_filename = '/content/drive/MyDrive/code/' + filename
     # path_to_script = os.path.dirname(os.path.abspath(__file__))
-    my_filename = os.path.join(path, 'results\\rfc', filename)
+    my_filename = os.path.join(path, 'results/rfc', filename)
 
     for i in range(1, n_rep):
         run_algorithm_rfc_configuration(metrics,
@@ -368,200 +368,201 @@ def run_algorithm_rf(filename='', path='', stratify=False, train_size=0.8,
     y, X = load_normalized_dataset(file = None, normalize = normalize_data, scaler=scaler)
     metrics = init_metrics_for_rfc()
 
-    my_filename = os.path.join(path, 'results\\rfc', filename)
+    my_filename = os.path.join(path, 'results/rfc', filename)
 
     # GINI - Equivalent for islam2019mapreduce
-    # run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12',
-    #                                 X, y, criterion='gini', stratify=stratify,
-    #                                 train_size=train_size)
+    run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12',
+                                    X, y, criterion='gini', stratify=stratify,
+                                    train_size=train_size)
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_rfc, header=True)
     # ENTROPY with the rest configs as for islam2019mapreduce
-    # run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12',
-    #                                 X, y, criterion='entropy', stratify=stratify, train_size=train_size)
+    run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12',
+                                    X, y, criterion='entropy', stratify=stratify, train_size=train_size)
     #
     # # CALIBRATING n_estimators param + ENTROPY/GINI
-    # for n_estimators in chain(range(1, 80, 10), range(80, 120, 5), range(120, 250, 10), range(250, 500, 25), range(500, 1000, 50)):
-    #   run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = '+str(n_estimators)+
-    #                                   ', min_samples_leaf=32, max_depth = 12',
-    #                                   X, y, criterion = 'gini', n_estimators=n_estimators,
-    #                                   stratify = stratify, train_size = train_size)
-    #   run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = '+str(n_estimators)+
-    #                                   ', min_samples_leaf=32, max_depth = 12', X, y,
-    #                                   criterion = 'entropy', n_estimators = n_estimators,
-    #                                   stratify = stratify, train_size = train_size)
-    #
-    # # CALIBRATING min_samples_leaf param + ENTROPY/GINI
-    # for min_samples_leaf in range(1, 100, 5):
-    #     run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=' +
-    #                                     str(min_samples_leaf) + ', max_depth = 12', X, y, criterion='gini',
-    #                                     min_samples_leaf=min_samples_leaf, stratify=stratify,
-    #                                     train_size=train_size)
-    #     run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=' +
-    #                                     str(min_samples_leaf) + ', max_depth = 12', X, y, criterion='entropy',
-    #                                     min_samples_leaf=min_samples_leaf, stratify=stratify,
-    #                                     train_size=train_size)
-    #
-    # # CALIBRATING max_depth param + GINI/ENTROPY
-    # run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = None',
-    #                                 X, y, criterion='gini', max_depth=None, stratify=stratify,
-    #                                 train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = None',
-    #                                 X, y, criterion='entropy', max_depth=None, stratify=stratify,
-    #                                 train_size=train_size)
-    # for max_depth in chain(range(1, 16, 1), range(16, 100, 2)):
-    #     run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = ' +
-    #                                     str(max_depth), X, y, criterion='gini', max_depth=max_depth,
-    #                                     stratify=stratify, train_size=train_size)
-    #     run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = ' +
-    #                                     str(max_depth), X, y, criterion='entropy', max_depth=max_depth,
-    #                                     stratify=stratify, train_size=train_size)
-    #
-    # # CALIBRATING min_samples_split param + ENTROPY/GINI
-    # for min_samples_split in range(3, len(X), 20):
-    #     run_algorithm_rfc_configuration(metrics,
-    #                                     'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_samples_split = ' +
-    #                                     str(min_samples_split), X, y, criterion='gini',
-    #                                     min_samples_split=min_samples_split, stratify=stratify,
-    #                                     train_size=train_size)
-    #     run_algorithm_rfc_configuration(metrics,
-    #                                     'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_samples_split= ' +
-    #                                     str(min_samples_split), X, y, criterion='entropy',
-    #                                     min_samples_split=min_samples_split, stratify=stratify,
-    #                                     train_size=train_size)
-    #
-    # # CALIBRATING min_weight_fraction_leaf param + ENTROPY/GINI
-    # for min_weight_fraction_leaf in [0, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5]:
-    #   run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_weight_fraction_leaf = '+ str(min_weight_fraction_leaf), X, y, criterion = 'gini',
-    #                                   min_weight_fraction_leaf=min_weight_fraction_leaf,
-    #                                   stratify = stratify, train_size = train_size)
-    #   run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_weight_fraction_leaf= '+str(min_weight_fraction_leaf),
-    #                                   X, y, criterion = 'entropy', min_weight_fraction_leaf = min_weight_fraction_leaf,
-    #                                   stratify = stratify, train_size = train_size)
-    #
-    # # CALIBRATING max_features param + ENTROPY/GINI
-    # for max_features in range(1, 20, 2):
-    #   run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features = '+ str(max_features),
-    #                                   X, y, criterion = 'gini', max_features=max_features, stratify = stratify,
-    #                                   train_size = train_size)
-    #   run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features= '+str(max_features),
-    #                                   X, y, criterion = 'entropy', max_features = max_features, stratify = stratify,
-    #                                   train_size = train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features = log2',
-    #                                 X, y, criterion='gini', max_features='log2', stratify=stratify,
-    #                                 train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features= log2',
-    #                                 X, y, criterion='entropy', max_features='log2', stratify=stratify,
-    #                                 train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features = sqrt',
-    #                                 X, y, criterion='gini', max_features='sqrt', stratify=stratify,
-    #                                 train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features= sqrt',
-    #                                 X, y, criterion='entropy', max_features='sqrt',
-    #                                 stratify=stratify, train_size=train_size)
-    #
-    # # CALIBRATING max_leaf_nodes param + ENTROPY/GINI
-    # for max_leaf_nodes in range(2, len(X), 20):
-    #     run_algorithm_rfc_configuration(metrics,
-    #                                     'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_leaf_nodes = ' + str(
-    #                                         max_leaf_nodes),
-    #                                     X, y, criterion='gini', max_leaf_nodes=max_leaf_nodes,
-    #                                     stratify=stratify, train_size=train_size)
-    #     run_algorithm_rfc_configuration(metrics,
-    #                                     'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_leaf_nodes= ' + str(
-    #                                         max_leaf_nodes),
-    #                                     X, y, criterion='entropy', max_leaf_nodes=max_leaf_nodes,
-    #                                     stratify=stratify, train_size=train_size)
-    #
-    # # CALIBRATING min_impurity_decrease param + ENTROPY/GINI
-    # for min_impurity_decrease in range(0, len(X), 20):
-    #   run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_impurity_decrease = '+ str(min_impurity_decrease),
-    #                                   X, y, criterion = 'gini', min_impurity_decrease=min_impurity_decrease,
-    #                                   stratify = stratify, train_size = train_size)
-    #   run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_impurity_decrease= '+str(min_impurity_decrease),
-    #                                   X, y, criterion = 'entropy', min_impurity_decrease = min_impurity_decrease,
-    #                                   stratify = stratify, train_size = train_size)
-    #
-    # # CALIBRATING class_weight param + ENTROPY/GINI
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, class_weight = balanced',
-    #                                 X, y, criterion='gini', class_weight='balanced',
-    #                                 stratify=stratify, train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, class_weight= balanced',
-    #                                 X, y, criterion='entropy', class_weight='balanced',
-    #                                 stratify=stratify, train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, class_weight = balanced_subsample',
-    #                                 X, y, criterion='gini', class_weight='balanced_subsample', stratify=stratify,
-    #                                 train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, class_weight= balanced_subsample',
-    #                                 X, y, criterion='entropy', class_weight='balanced_subsample',
-    #                                 stratify=stratify, train_size=train_size)
-    #
-    # # CALIBRATING bootstrap param + ENTROPY/GINI
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap = True',
-    #                                 X, y, criterion='gini', bootstrap=True, stratify=stratify,
-    #                                 train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap= True',
-    #                                 X, y, criterion='entropy', bootstrap=True, stratify=stratify,
-    #                                 train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap = False',
-    #                                 X, y, criterion='gini', bootstrap=False, stratify=stratify,
-    #                                 train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap= False',
-    #                                 X, y, criterion='entropy', bootstrap=False, stratify=stratify,
-    #                                 train_size=train_size)
-    #
-    # # CALIBRATING oob_score param + ENTROPY/GINI
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap = True, oob_score = True',
-    #                                 X, y, criterion='gini', bootstrap=True, oob_score=True,
-    #                                 stratify=stratify, train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap= True, oob_score = True',
-    #                                 X, y, criterion='entropy', bootstrap=True, oob_score=True,
-    #                                 stratify=stratify, train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap = True, oob_score = False',
-    #                                 X, y, criterion='gini', bootstrap=True, oob_score=False,
-    #                                 stratify=stratify, train_size=train_size)
-    # run_algorithm_rfc_configuration(metrics,
-    #                                 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap= True, oob_score = False',
-    #                                 X, y, criterion='entropy', bootstrap=True, oob_score=False,
-    #                                 stratify=stratify, train_size=train_size)
-    #
-    # # CALIBRATING ccp_alpha param + ENTROPY/GINI
-    # for ccp_alpha in [0.0, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 1]:
-    #   run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, ccp_alpha = '+
-    #                                   str(ccp_alpha), X, y, criterion = 'gini', ccp_alpha=ccp_alpha,
-    #                                   stratify = stratify, train_size = train_size)
-    #   run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, ccp_alpha= '+
-    #                                   str(ccp_alpha), X, y, criterion = 'entropy', ccp_alpha = ccp_alpha,
-    #                                   stratify = stratify, train_size = train_size)
-    #
-    # # CALIBRATING max_samples param + ENTROPY/GINI
-    # for max_samples in [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1]:
-    #   run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_samples = '+
-    #                                   str(max_samples), X, y, criterion = 'gini', max_samples=max_samples,
-    #                                   stratify = stratify, train_size = train_size)
-    #   run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_samples= '+
-    #                                   str(max_samples), X, y, criterion = 'entropy', max_samples = max_samples,
-    #                                   stratify = stratify, train_size = train_size)
+    for n_estimators in chain(range(1, 80, 10), range(80, 120, 5), range(120, 250, 10), range(250, 500, 25), range(500, 1000, 50)):
+      run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = '+str(n_estimators)+
+                                      ', min_samples_leaf=32, max_depth = 12',
+                                      X, y, criterion = 'gini', n_estimators=n_estimators,
+                                      stratify = stratify, train_size = train_size)
+      run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = '+str(n_estimators)+
+                                      ', min_samples_leaf=32, max_depth = 12', X, y,
+                                      criterion = 'entropy', n_estimators = n_estimators,
+                                      stratify = stratify, train_size = train_size)
 
-    # concatenated_n_estimators = chain(range(76, 108, 2), range(155,175,2), range(915, 925, 2))
-    for n_estimators in range(100, 101):
-        # for n_estimators in concatenated_n_estimators:
+    # CALIBRATING min_samples_leaf param + ENTROPY/GINI
+    for min_samples_leaf in range(1, 100, 5):
+        run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=' +
+                                        str(min_samples_leaf) + ', max_depth = 12', X, y, criterion='gini',
+                                        min_samples_leaf=min_samples_leaf, stratify=stratify,
+                                        train_size=train_size)
+        run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=' +
+                                        str(min_samples_leaf) + ', max_depth = 12', X, y, criterion='entropy',
+                                        min_samples_leaf=min_samples_leaf, stratify=stratify,
+                                        train_size=train_size)
+
+    # CALIBRATING max_depth param + GINI/ENTROPY
+    run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = None',
+                                    X, y, criterion='gini', max_depth=None, stratify=stratify,
+                                    train_size=train_size)
+    run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = None',
+                                    X, y, criterion='entropy', max_depth=None, stratify=stratify,
+                                    train_size=train_size)
+    for max_depth in chain(range(1, 16, 1), range(16, 100, 2)):
+        run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = ' +
+                                        str(max_depth), X, y, criterion='gini', max_depth=max_depth,
+                                        stratify=stratify, train_size=train_size)
+        run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = ' +
+                                        str(max_depth), X, y, criterion='entropy', max_depth=max_depth,
+                                        stratify=stratify, train_size=train_size)
+
+    # CALIBRATING min_samples_split param + ENTROPY/GINI
+    for min_samples_split in range(3, len(X), 20):
+        run_algorithm_rfc_configuration(metrics,
+                                        'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_samples_split = ' +
+                                        str(min_samples_split), X, y, criterion='gini',
+                                        min_samples_split=min_samples_split, stratify=stratify,
+                                        train_size=train_size)
+        run_algorithm_rfc_configuration(metrics,
+                                        'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_samples_split= ' +
+                                        str(min_samples_split), X, y, criterion='entropy',
+                                        min_samples_split=min_samples_split, stratify=stratify,
+                                        train_size=train_size)
+
+    # CALIBRATING min_weight_fraction_leaf param + ENTROPY/GINI
+    for min_weight_fraction_leaf in [0, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5]:
+      run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_weight_fraction_leaf = '+ str(min_weight_fraction_leaf), X, y, criterion = 'gini',
+                                      min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                      stratify = stratify, train_size = train_size)
+      run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_weight_fraction_leaf= '+str(min_weight_fraction_leaf),
+                                      X, y, criterion = 'entropy', min_weight_fraction_leaf = min_weight_fraction_leaf,
+                                      stratify = stratify, train_size = train_size)
+
+    # CALIBRATING max_features param + ENTROPY/GINI
+    for max_features in range(1, 20, 2):
+      run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features = '+ str(max_features),
+                                      X, y, criterion = 'gini', max_features=max_features, stratify = stratify,
+                                      train_size = train_size)
+      run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features= '+str(max_features),
+                                      X, y, criterion = 'entropy', max_features = max_features, stratify = stratify,
+                                      train_size = train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features = log2',
+                                    X, y, criterion='gini', max_features='log2', stratify=stratify,
+                                    train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features= log2',
+                                    X, y, criterion='entropy', max_features='log2', stratify=stratify,
+                                    train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features = sqrt',
+                                    X, y, criterion='gini', max_features='sqrt', stratify=stratify,
+                                    train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_features= sqrt',
+                                    X, y, criterion='entropy', max_features='sqrt',
+                                    stratify=stratify, train_size=train_size)
+
+    # CALIBRATING max_leaf_nodes param + ENTROPY/GINI
+    for max_leaf_nodes in range(2, len(X), 20):
+        run_algorithm_rfc_configuration(metrics,
+                                        'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_leaf_nodes = ' + str(
+                                            max_leaf_nodes),
+                                        X, y, criterion='gini', max_leaf_nodes=max_leaf_nodes,
+                                        stratify=stratify, train_size=train_size)
+        run_algorithm_rfc_configuration(metrics,
+                                        'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_leaf_nodes= ' + str(
+                                            max_leaf_nodes),
+                                        X, y, criterion='entropy', max_leaf_nodes=max_leaf_nodes,
+                                        stratify=stratify, train_size=train_size)
+
+    # CALIBRATING min_impurity_decrease param + ENTROPY/GINI
+    for min_impurity_decrease in range(0, len(X), 20):
+      run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_impurity_decrease = '+ str(min_impurity_decrease),
+                                      X, y, criterion = 'gini', min_impurity_decrease=min_impurity_decrease,
+                                      stratify = stratify, train_size = train_size)
+      run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, min_impurity_decrease= '+str(min_impurity_decrease),
+                                      X, y, criterion = 'entropy', min_impurity_decrease = min_impurity_decrease,
+                                      stratify = stratify, train_size = train_size)
+
+    # CALIBRATING class_weight param + ENTROPY/GINI
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, class_weight = balanced',
+                                    X, y, criterion='gini', class_weight='balanced',
+                                    stratify=stratify, train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, class_weight= balanced',
+                                    X, y, criterion='entropy', class_weight='balanced',
+                                    stratify=stratify, train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, class_weight = balanced_subsample',
+                                    X, y, criterion='gini', class_weight='balanced_subsample', stratify=stratify,
+                                    train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, class_weight= balanced_subsample',
+                                    X, y, criterion='entropy', class_weight='balanced_subsample',
+                                    stratify=stratify, train_size=train_size)
+
+    # CALIBRATING bootstrap param + ENTROPY/GINI
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap = True',
+                                    X, y, criterion='gini', bootstrap=True, stratify=stratify,
+                                    train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap= True',
+                                    X, y, criterion='entropy', bootstrap=True, stratify=stratify,
+                                    train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap = False',
+                                    X, y, criterion='gini', bootstrap=False, stratify=stratify,
+                                    train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap= False',
+                                    X, y, criterion='entropy', bootstrap=False, stratify=stratify,
+                                    train_size=train_size)
+
+    # CALIBRATING oob_score param + ENTROPY/GINI
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap = True, oob_score = True',
+                                    X, y, criterion='gini', bootstrap=True, oob_score=True,
+                                    stratify=stratify, train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap= True, oob_score = True',
+                                    X, y, criterion='entropy', bootstrap=True, oob_score=True,
+                                    stratify=stratify, train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap = True, oob_score = False',
+                                    X, y, criterion='gini', bootstrap=True, oob_score=False,
+                                    stratify=stratify, train_size=train_size)
+    run_algorithm_rfc_configuration(metrics,
+                                    'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, bootstrap= True, oob_score = False',
+                                    X, y, criterion='entropy', bootstrap=True, oob_score=False,
+                                    stratify=stratify, train_size=train_size)
+
+    # CALIBRATING ccp_alpha param + ENTROPY/GINI
+    for ccp_alpha in [0.0, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 1]:
+      run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, ccp_alpha = '+
+                                      str(ccp_alpha), X, y, criterion = 'gini', ccp_alpha=ccp_alpha,
+                                      stratify = stratify, train_size = train_size)
+      run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, ccp_alpha= '+
+                                      str(ccp_alpha), X, y, criterion = 'entropy', ccp_alpha = ccp_alpha,
+                                      stratify = stratify, train_size = train_size)
+
+    # CALIBRATING max_samples param + ENTROPY/GINI
+    for max_samples in [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1]:
+      run_algorithm_rfc_configuration(metrics, 'RF, GINI, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_samples = '+
+                                      str(max_samples), X, y, criterion = 'gini', max_samples=max_samples,
+                                      stratify = stratify, train_size = train_size)
+      run_algorithm_rfc_configuration(metrics, 'RF, ENTROPY, n_estimators = 100, min_samples_leaf=32, max_depth = 12, max_samples= '+
+                                      str(max_samples), X, y, criterion = 'entropy', max_samples = max_samples,
+                                      stratify = stratify, train_size = train_size)
+    #
+    concatenated_n_estimators = chain(range(76, 108, 2), range(155,175,2), range(915, 925, 2))
+    # for n_estimators in range(100, 101):
+    for n_estimators in concatenated_n_estimators:
         concatenated_max_depth = chain(range(12, 13), range(30, 35))
-        for max_depth in range(12, 13):
+        # for max_depth in range(12, 13):
+        for max_depth in concatenated_max_depth:
             # 11+5=15
             concatenated_min_samples_leaf = chain(range(1, 20, 2), range(30, 35))
             for min_samples_leaf in concatenated_min_samples_leaf:

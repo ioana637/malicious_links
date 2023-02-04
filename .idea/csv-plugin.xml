@@ -38,6 +38,27 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\results\rfc\metrics_DN_min_max_RFC_train_size_20_with_stratify_30_01_2023_19_53.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\results\rfc\top20_RF_train_size_80_with_stratify_DN_minmax.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\results\rfc\top20_RF_train_size_80_with_stratify_DN_standard.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

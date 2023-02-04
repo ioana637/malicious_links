@@ -17,7 +17,7 @@ def run_top_20_KNN_configs(filename='', path = '', stratify=False, train_size=0.
 
     # full_path_filename = '/content/drive/MyDrive/code/' + filename
     # path_to_script = os.path.dirname(os.path.abspath(__file__))
-    my_filename = os.path.join(path, 'results\\knn', filename)
+    my_filename = os.path.join(path, 'results/knn', filename)
 
     for i in range(1, n_rep):
         run_algorithm_KNN_configuration(metrics,
@@ -241,7 +241,7 @@ def run_algorithm_KNN(filename='', path = '', stratify=False, train_size=0.8,
 
     # full_path_filename = '/content/drive/MyDrive/code/' + filename
     # path_to_script = os.path.dirname(os.path.abspath(__file__))
-    my_filename = os.path.join(path, 'results\\knn', filename)
+    my_filename = os.path.join(path, 'results/knn', filename)
 
     # Default algorithm
     run_algorithm_KNN_configuration(metrics, 'KNN', X, y, stratify=stratify, train_size=train_size)
