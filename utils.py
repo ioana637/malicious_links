@@ -129,6 +129,13 @@ def cal_metrics(y_test, y_pred, y_pred_probabilities, classifier):
 
     return precision, recall, f1, roc_auc
 
+def unique(list1):
+    x = np.array(list1)
+    return np.unique(x)
+
+def print_dict(dictionary):
+    for k, v in dictionary.items():
+        print(k,'->', v)
 
 def appendMetricsTOCSV(filename, metrics, init_function, header = False, ):
     df = pd.DataFrame(metrics)

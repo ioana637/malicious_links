@@ -38,6 +38,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\new_results\knn\metrics_DN_min_max_KNN_train_size_20_with_stratify_04_02_2023_08_06.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\results\rfc\metrics_DN_min_max_RFC_train_size_20_with_stratify_30_01_2023_19_53.csv">
           <value>
             <Attribute>
