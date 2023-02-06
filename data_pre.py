@@ -3,7 +3,9 @@
 # 3. Categorical features in two formats
 # 4. Normalize all data with MinMax Scaler and StandardScaler
 # 5. Randomly split data into training and testing
+import math
 from datetime import *
+from math import log
 
 import numpy as np
 import pandas as pd
@@ -118,10 +120,11 @@ def compute_weight_of_evidence_algorithm_for_column(column_name, new_column_name
         ratio_Ni_TN = 0
         if TN != 0:
             ratio_Ni_TN = ni/TN
-        if ratio_Ni_TN == 0:
+        if ratio_Ni_TN == 0 or ratio_Pi_TP == 0:
             df[new_column_name] = df[new_column_name].replace(category, 0)
         else:
-            df[new_column_name] = df[new_column_name].replace(category, ratio_Pi_TP/ratio_Ni_TN)
+            ratio = ratio_Pi_TP/ratio_Ni_TN
+            df[new_column_name] = df[new_column_name].replace(category, log(ratio, math.e))
     return df
 
 def compute_weight_of_evidence_algorithm_for_columns(df):
@@ -220,7 +223,7 @@ def main_data_preprocessing():
     df = convert_datetime_to_timestamps(df)
     df = compute_supervised_ratio_algorithm_for_columns(df)
     df = compute_weight_of_evidence_algorithm_for_columns(df)
-    df =remove_non_numerical_columns(df)
+    df = remove_non_numerical_columns(df)
     export_normalized_data(df)
 
-# main_data_preprocessing()
+main_data_preprocessing()
