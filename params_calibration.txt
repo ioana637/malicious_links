@@ -1,0 +1,64 @@
+DT:
+params:
+criterion gini + entropy
+splitter best
+max depth: 5..15 => 11
+min samples leaf: 1..20, 30..35 => 26
+min samples split: 2..10 => 9
+max features None, sqrt => 2
+min weight fraction: 0.0
+max leaf nodes: None, 18..25 (din 2 in 2) => 4
+min impurity descrease 0.0
+class weight: balanced
+ccp alpha: 0.0
+
+2* 26 * 2 * 9 * 4 * 11= 41,184
+
+KNN:
+params:
+nc neighbors: 1..10 => 10
+weights: distance => 1
+algorithm: ball tree kd tree auto => 3
+metric params: None
+metric: mahattan, minkowski, euclidian
+p : 1, 10 => 10
+leaf_size: (1..15 din 2 in 2) 
+20..35 (din 2 in 2), 43..47, 50..57, 65..70, 85..92 => 
+7 + 8 + 4 + 7+ 5+7 = 18 +8 +12 + 38 
+
+10 * 3 * 3 *10 * 38
+37800
+
+RF:
+params:
+criterion: entropy, gini
+n estimators: 50, 51, 90, 100, 110
+min samples leaf: 1..6 (din 2 in 2), 11..21 (din 2 in 2),32 => 10
+min samples split: 2 ..10 (din 2 in 2)
+max depth: 10..14, 50..54 =>11
+max leaf nodes: None, 680..685, 1560..1565
+max features sqrt
+min weight fraction lead: 0.0 
+impurity decrease: 0.0
+Bootstrap: True
+oob score: False
+ccp alpha 0.0
+max samples: None
+2*5*10*5*11*11 = 60500
+
+2 * 5 * (5+3+1) * 5 * 8 *(1+5 + 5) =
+39600
+
+
+KNN- preliminary: 188
+-2 stage: 33696
+
+
+DT - preliminary: 941  
+-2 stage: 33320 
+
+
+RF - preliminary: 908
+-2 stage: 27264
+
+

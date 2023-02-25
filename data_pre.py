@@ -226,4 +226,4 @@ def main_data_preprocessing():
     df = remove_non_numerical_columns(df)
     export_normalized_data(df)
 
-main_data_preprocessing()
+# main_data_preprocessing()

@@ -15,7 +15,7 @@ from utils import unique, print_dict
 
 def load_results_from_file(filename):
     try:
-        df = pd.read_csv(filename)
+        df = pd.read_csv(filename, low_memory=False)
         return df
     except FileNotFoundError as err:
         print(err)
@@ -47,12 +47,11 @@ def compute_avg_for_each_parameter(df):
         try:
             df_aux = df.groupby(columnName)[['precision', 'recall', 'f1_score', 'roc_auc','average_metric']].mean()
             print()
-            print(df_aux.to_string())
+            print(df_aux.to_csv())
         except FutureWarning as err:
             print(columnName)
         # print('Column Name : ', columnName)
         # print('Column Contents : ', columnData.values)
-
 # 5. List top 20 configurations based on the average_metric, sort their parameters
 def determine_top_configuration(df, top_k = 20):
     df.sort_values(by =['average_metric'], ascending=False, inplace=True)
@@ -63,7 +62,10 @@ def determine_top_configuration(df, top_k = 20):
     for (columnName, columnData) in top_k_df.iteritems():
         if (columnName in ['label','precision', 'recall', 'f1_score', 'roc_auc','average_metric' ]):
             continue
-        unique_values = unique(columnData.values)
+        try:
+            unique_values = unique(columnData.values)
+        except TypeError:
+            unique_values = columnData.values
         # print(unique_values)
         params[columnName] = unique_values
         print('Column Name : ', columnName)
@@ -73,9 +75,14 @@ def determine_top_configuration(df, top_k = 20):
 def main_data_post():
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     # my_filename = os.path.join(path_to_script, 'new_results/knn', filename) # for Linux
-    my_filename = os.path.join(path_to_script, 'new_results\\knn', 'metrics_DN_min_max_KNN_train_size_20_with_stratify_04_02_2023_08_06.csv')
-
-    df = load_results_from_file(my_filename)
+    my_filename = os.path.join(path_to_script, 'new_results\\rfc',
+                                'metrics_DN_min_max_RFC_train_size_80_with_stratify_13_02_2023_10_06.csv')
+                                # 'metrics_DN_standard_KNN_train_size_80_with_stratify_13_02_2023_10_03.csv')
+    my_filename_1 = os.path.join(path_to_script, 'new_results\\rfc',
+                               'metrics_DN_standard_RFC_train_size_80_with_stratify_13_02_2023_10_06.csv')
+    df1 = load_results_from_file(my_filename)
+    df2 = load_results_from_file(my_filename_1)
+    df = df1.append(df2)
     df = compute_average_metric(df)
     print('--------------------- AVERAGE ---------------------')
     print(compute_average_for_metrics(df))
@@ -90,4 +97,4 @@ def main_data_post():
 
     compute_avg_for_each_parameter(df)
 
-main_data_post()
+# main_data_post()
