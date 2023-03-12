@@ -38,6 +38,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\new_results\ada\metrics_DN_standard_ADA_BOOST_train_size_80_with_stratify_25_02_2023_19_53.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\new_results\knn\have_bug\metrics_DN_min_max_KNN_train_size_30_with_stratify_04_02_2023_08_06.csv">
           <value>
             <Attribute>
@@ -81,6 +88,20 @@
           </value>
         </entry>
         <entry key="\new_results\knn\have_bug\metrics_DN_standard_KNN_train_size_70_with_stratify_04_02_2023_08_06.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\svm\metrics_DN_min_max_SVC_linear_kernel_train_size_80_with_stratify_25_02_2023_19_51.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\svm\metrics_DN_standard_SVC_linear_kernel_train_size_80_with_stratify_25_02_2023_19_51.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

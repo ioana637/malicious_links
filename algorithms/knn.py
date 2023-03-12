@@ -200,8 +200,6 @@ def run_algorithm_KNN_configuration(metrics, label, X, y,
                                     leaf_size=30, p=2, metric='minkowski', metric_params=None,
                                     stratify=False, train_size=0.8):
     X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
-
-
     # Creating the classifier object
     classifier = KNeighborsClassifier(n_neighbors=n_neighbors, weights=weights, algorithm=algorithm,
                                       n_jobs=-1, leaf_size=leaf_size, p=p, metric=metric,

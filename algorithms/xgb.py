@@ -2,13 +2,14 @@ import os
 import warnings
 from itertools import chain
 
+import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
+
+from data_pre import split_data_in_testing_training, load_normalized_dataset
 
 warnings.filterwarnings("error")
 
-import numpy as np
-
-from utils import split_data, prediction, cal_metrics, appendMetricsTOCSV
+from utils import prediction, cal_metrics, appendMetricsTOCSV
 
 
 def run_algorithm_gradient_boost_configuration(metrics, label, X, y,
@@ -29,11 +30,8 @@ def run_algorithm_gradient_boost_configuration(metrics, label, X, y,
                                                n_iter_no_change=None,
                                                tol=1e-4,
                                                ccp_alpha=0.0,
-                                               stratify=False, train_size=0.8,
-                                               normalize_data=False, scaler='min-max'
-                                               ):
-    X_train, X_test, y_train, y_test = split_data(X, y, normalize_data=normalize_data, stratify=stratify,
-                                                  train_size=train_size, scaler=scaler)
+                                               stratify=False, train_size=0.8):
+    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
     try:
         # Creating the classifier object
         classifier = GradientBoostingClassifier(loss=loss, learning_rate=learning_rate,
@@ -98,34 +96,33 @@ def init_metrics_for_XGB():
             }
 
 
-def run_algorithm_xgb(df, filename='', stratify=False, train_size=0.8, normalize_data=False, scaler='min-max'):
-    y = df['label'].copy()
-    X = df.drop('label', axis=1).copy()
+def run_algorithm_xgb(filename='', path='', stratify=False, train_size=0.8,
+                      normalize_data=False, scaler='min-max'):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_XGB()
 
-    path_to_script = os.path.dirname(os.path.abspath(__file__))
-    my_filename = os.path.join(path_to_script, 'xgb', filename)
-
-    # default algorithm
-    run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - default params', X, y,
-                                               stratify=stratify, train_size=train_size,
-                                               normalize_data=normalize_data, scaler=scaler)
-    run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - loss = exponential', X, y,
-                                               loss='exponential', stratify=stratify,
-                                               train_size=train_size, normalize_data=normalize_data,
-                                               scaler=scaler)
-    run_algorithm_gradient_boost_configuration(metrics,
-                                               'Gradient Boosting - loss = exponential, criterion = squared_error',
-                                               X, y, criterion='squared_error', loss='exponential',
-                                               stratify=stratify, train_size=train_size,
-                                               normalize_data=normalize_data, scaler=scaler)
-    run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - criterion = squared_error', X, y,
-                                               criterion='squared_error', stratify=stratify,
-                                               train_size=train_size, normalize_data=normalize_data,
-                                               scaler=scaler)
+    # full_path_filename = '/content/drive/MyDrive/code/' + filename
+    # path_to_script = os.path.dirname(os.path.abspath(__file__))
+    my_filename = os.path.join(path, 'results/xgb', filename)
 
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB, header=True)
-    # CALIBRATING n_estimators
+
+    # default algorithm
+    # run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - default params', X, y,
+    #                                            stratify=stratify, train_size=train_size)
+    # run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - loss = exponential', X, y,
+    #                                            loss='exponential', stratify=stratify,
+    #                                            train_size=train_size)
+    # run_algorithm_gradient_boost_configuration(metrics,
+    #                                            'Gradient Boosting - loss = exponential, criterion = squared_error',
+    #                                            X, y, criterion='squared_error', loss='exponential',
+    #                                            stratify=stratify, train_size=train_size)
+    # run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - criterion = squared_error', X, y,
+    #                                            criterion='squared_error', stratify=stratify,
+    #                                            train_size=train_size)
+    #
+    # metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)
+    # # CALIBRATING n_estimators
     # for n_estimators in chain(range(1, 100, 2), range(100, 200, 5), range(200, 300, 10), range(300, 500, 25),
     #                           range(500, 1000, 50)):
     #     run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - n_estimators = ' + str(n_estimators),
@@ -144,7 +141,7 @@ def run_algorithm_xgb(df, filename='', stratify=False, train_size=0.8, normalize
     #                                                'Gradient Boosting - criterion = squared_error, n_estimators = ' + str(
     #                                                    n_estimators), X, y, n_estimators=n_estimators,
     #                                                criterion='squared_error', stratify=stratify, train_size=train_size)
-
+    #
     #     # CALIBRATING learning_rate
     # for learning_rate in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3,
     #                       1.4, 1.5, 1.6, 1.7, 1.8, 1.9,
@@ -166,13 +163,26 @@ def run_algorithm_xgb(df, filename='', stratify=False, train_size=0.8, normalize
     #                                                'Gradient Boosting - criterion = squared_error, learning_rate = ' + str(
     #                                                    learning_rate), X, y, learning_rate=(0.0 + learning_rate),
     #                                                criterion='squared_error', stratify=stratify, train_size=train_size)
-
-    # for learning_rate in chain(range(10, 50, 1), range(50, 100, 2), range(100, 250, 5), range(250, 500, 10), range(500, 1000, 25)):
-    #     run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - learning_rate = ' + str(learning_rate), X, y, learning_rate = ( 0.0 + learning_rate), stratify = stratify, train_size = train_size)
-    #     run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - loss = exponential, learning_rate = ' + str(learning_rate), X, y,  learning_rate = (0.0 + learning_rate), loss = 'exponential', stratify = stratify, train_size = train_size)
-    #     run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - loss = exponential, criterion = squared_error, learning_rate = ' + str(learning_rate), X, y,  learning_rate = (0.0 + learning_rate), criterion = 'squared_error', loss = 'exponential', stratify = stratify, train_size = train_size)
-    #     run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - criterion = squared_error, learning_rate = ' + str(learning_rate), X, y, learning_rate = (0.0 + learning_rate),  criterion = 'squared_error', stratify = stratify, train_size = train_size)
-
+    #
+    # for learning_rate in chain(range(10, 50, 1), range(50, 100, 2), range(100, 250, 5), range(250, 500, 10),
+    #                            range(500, 1000, 25)):
+    #     run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - learning_rate = ' + str(learning_rate),
+    #                                                X, y, learning_rate=(0.0 + learning_rate), stratify=stratify,
+    #                                                train_size=train_size)
+    #     run_algorithm_gradient_boost_configuration(metrics,
+    #                                                'Gradient Boosting - loss = exponential, learning_rate = ' + str(
+    #                                                    learning_rate), X, y, learning_rate=(0.0 + learning_rate),
+    #                                                loss='exponential', stratify=stratify, train_size=train_size)
+    #     run_algorithm_gradient_boost_configuration(metrics,
+    #                                                'Gradient Boosting - loss = exponential, criterion = squared_error, learning_rate = ' + str(
+    #                                                    learning_rate), X, y, learning_rate=(0.0 + learning_rate),
+    #                                                criterion='squared_error', loss='exponential', stratify=stratify,
+    #                                                train_size=train_size)
+    #     run_algorithm_gradient_boost_configuration(metrics,
+    #                                                'Gradient Boosting - criterion = squared_error, learning_rate = ' + str(
+    #                                                    learning_rate), X, y, learning_rate=(0.0 + learning_rate),
+    #                                                criterion='squared_error', stratify=stratify, train_size=train_size)
+    #
     # # CALIBRATING subsample
     # for subsample in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.875, 0.9, 0.905, 0.91, 0.915, 0.92,
     #                   0.925, 0.93, 0.935, 0.94, 0.945, 0.95, 0.955, 0.96, 0.965, 0.97, 0.975, 0.98, 0.985, 0.99, 0.995]:
@@ -404,7 +414,7 @@ def run_algorithm_xgb(df, filename='', stratify=False, train_size=0.8, normalize
     #                                            y, init='zero', criterion='squared_error', stratify=stratify,
     #                                            train_size=train_size)
     # # TODO more estimators
-    #
+    # metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)
     # # CALIBRATING max_features (0.0, 1.0], [1, n_features) {‘auto’, ‘sqrt’, ‘log2’}
     # run_algorithm_gradient_boost_configuration(metrics, 'Gradient Boosting - max_features = auto', X, y,
     #                                            max_features='auto', stratify=stratify, train_size=train_size)
@@ -484,7 +494,7 @@ def run_algorithm_xgb(df, filename='', stratify=False, train_size=0.8, normalize
     #                                                'Gradient Boosting - criterion = squared_error, max_features = ' + str(
     #                                                    max_features), X, y, max_features=max_features,
     #                                                criterion='squared_error', stratify=stratify, train_size=train_size)
-    #
+    # metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)
     # # CALIBRATING max_leaf_nodes [2, inf)]
     # for max_leaf_nodes in chain(range(2, 20, 1), range(20, 50, 2), range(50, 100, 5), range(100, 250, 10),
     #                             range(250, 500, 25), range(500, 1000, 50)):
@@ -520,7 +530,7 @@ def run_algorithm_xgb(df, filename='', stratify=False, train_size=0.8, normalize
     #                                                        train_size=train_size)
     #             run_algorithm_gradient_boost_configuration(metrics,
     #                                                        'Gradient Boosting - loss = exponential, n_iter_no_change = ' + str(
-    #                                                            max_leaf_nodes) + ', validation_fraction = ' + str(
+    #                                                            n_iter_no_change) + ', validation_fraction = ' + str(
     #                                                            validation_fraction), X, y,
     #                                                        n_iter_no_change=n_iter_no_change,
     #                                                        validation_fraction=validation_fraction, loss='exponential',
@@ -559,8 +569,8 @@ def run_algorithm_xgb(df, filename='', stratify=False, train_size=0.8, normalize
     #                                                'Gradient Boosting - criterion = squared_error, tol = ' + str(tol),
     #                                                X, y, tol=tol, criterion='squared_error', stratify=stratify,
     #                                                train_size=train_size)
-
-    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)
+    #
+    # metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)
 
     # min samples split	145-155	2	95-105	45-55
     # n iter no change	8..16	None	27-37
@@ -570,36 +580,72 @@ def run_algorithm_xgb(df, filename='', stratify=False, train_size=0.8, normalize
 
     for criterion in ['squared_error', 'friedman_mse']:
         for loss in ['exponential', 'log_loss']:
-            for learning_rate in np.random.uniform(low=0.75, high=0.85, size=(5,)):
-                #  5
-                for n_estimators in chain(range(92, 102, 2), range(165, 175, 2), range(295, 305, 2),
-                                              range(345, 355, 2), range(645, 655, 2), range(745, 755, 2),
-                                              range(845, 855, 2), range(945, 955, 2)):
-                        #  40
-                    for min_samples_split in chain(range(145, 155, 2), [2], range(95, 105, 2),
-                                                       range(45, 55, 2)):
-                            #  16
-                        for min_samples_leaf in chain(range(90, 100, 2), range(5, 10, 2),
-                                                          np.random.uniform(0.1, 0.2, (5,)), [1]):
-                                # 14
-                            for max_leaf_nodes in chain(range(19, 33, 2), range(40, 49, 2),
-                                                            range(397, 403, 2)):
-    #                          7 + 5 + 3 = 15
-                                run_algorithm_gradient_boost_configuration(metrics,
-                                                                           'Gradient Boosting - criterion = '+criterion
-                                                                           +', loss = ' + str(loss) + ', learning_rate='+
-                                                                           str(learning_rate)+', n_estimators='+
-                                                                           str(n_estimators)+', min_samples_split='+
-                                                                           str(min_samples_split)+', min_samples_leaf'+
-                                                                           str(min_samples_leaf)+', max_leaf_nodes='+
-                                                                           str(max_leaf_nodes),
-                                                                            X, y, criterion=criterion,
-                                                                           loss= loss, learning_rate=learning_rate,
-                                                                           n_estimators=n_estimators, min_samples_split=min_samples_split,
-                                                                           min_samples_leaf=min_samples_leaf,
-                                                                           max_leaf_nodes=max_leaf_nodes,
-                                                                           stratify=stratify, train_size=train_size,
-                                                                           normalize_data=normalize_data, scaler=scaler)
-                            metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)
+            for learning_rate in chain(np.random.uniform(low=0.05, high=0.15, size=(5,)),
+                                       np.random.uniform(low=0.7, high=0.9, size=(10,))):
+                for n_estimators in chain(range(71, 111, 1), range(120, 140, 1)):
+                    for subsample in [0.4, 0.3, 0.31, 0.32, 0.33, 0.34, 0.35, 0.36, 0.37, 0.38, 0.39,
+                                      0.41, 0.42, 0.43, 0.44, 0.45, 0.46, 0.47, 0.48, 0.49, 0.5, 0.9,
+                                      0.91, 0.92, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0]:
+                        for min_samples_split in chain(range(1, 21, 1), [0.6, 0.5, 0.51, 0.52, 0.53, 0.54, 0.55,
+                                                                         0.56, 0.57, 0.58, 0.59, 0.61, 0.62, 0.63,
+                                                                         0.64, 0.65, 0.66, 0.67, 0.68, 0.69, 0.7]):
+                            for min_samples_leaf in chain(range(1, 16, 1), np.random.uniform(0.1, 1.5, (10,))):
+                                for max_leaf_nodes in chain([None], range(2, 16, 1), range(50, 60, 1),
+                                                            range(175, 185, 1),
+                                                            range(245, 255, 1)):
+                                    for max_depth in range(1, 10, 1):
+                                        for min_weight_fraction_leaf in [0.0, 0.011, 0.012, 0.013, 0.014, 0.015,
+                                                                         0.016, 0.017, 0.018, 0.019, 0.03, 0.031, 0.032,
+                                                                         0.033, 0.034, 0.035, 0.036, 0.037, 0.038,
+                                                                         0.039,
+                                                                         0.04, 0.041, 0.042, 0.043, 0.045, 0.046, 0.047,
+                                                                         0.048, 0.049, 0.05]:
+                                            for max_features in [None, 0.8, 0.81, 0.82, 0.83, 0.84, 0.85, 0.86, 0.87,
+                                                                 0.88, 0.89, 0.9]:
+                                                for validation_fraction in [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11,
+                                                                            0.12,
+                                                                            0.13, 0.14, 0.15, 0.25, 0.26, 0.27, 0.28,
+                                                                            0.29, 0.3, 0.31,
+                                                                            0.32, 0.33, 0.34, 0.35]:
+                                                    for n_iter_no_change in chain([None], range(5, 16, 1),
+                                                                                  range(445, 455, 1),
+                                                                                  range(645, 655, 1), range(845, 855)):
+                                                        run_algorithm_gradient_boost_configuration(metrics,
+                                                                                                   'Gradient Boosting - criterion = ' + criterion
+                                                                                                   + ', loss = ' + str(
+                                                                                                       loss) + ', learning_rate=' +
+                                                                                                   str(learning_rate) + ', n_estimators=' +
+                                                                                                   str(n_estimators) + ', subsample=' + str(
+                                                                                                       subsample) +
+                                                                                                   ', min_samples_split=' +
+                                                                                                   str(min_samples_split) + ', min_samples_leaf' +
+                                                                                                   str(min_samples_leaf) + ', max_leaf_nodes=' +
+                                                                                                   str(max_leaf_nodes) + ', max_depth=' + str(
+                                                                                                       max_depth) +
+                                                                                                   ', min_weight_fraction_leaf=' + str(
+                                                                                                       min_weight_fraction_leaf) +
+                                                                                                   ', max_features = ' + str(
+                                                                                                       max_features) +
+                                                                                                   ', validation_fraction=' + str(
+                                                                                                       validation_fraction) +
+                                                                                                   ', n_iter_no_change=' + str(
+                                                                                                       n_iter_no_change),
+                                                                                                   X, y,
+                                                                                                   criterion=criterion,
+                                                                                                   loss=loss,
+                                                                                                   learning_rate=learning_rate,
+                                                                                                   n_estimators=n_estimators,
+                                                                                                   subsample=subsample,
+                                                                                                   min_samples_split=min_samples_split,
+                                                                                                   min_samples_leaf=min_samples_leaf,
+                                                                                                   max_leaf_nodes=max_leaf_nodes,
+                                                                                                   max_depth=max_depth,
+                                                                                                   min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                                                                                   max_features=max_features,
+                                                                                                   validation_fraction=validation_fraction,
+                                                                                                   n_iter_no_change=n_iter_no_change,
+                                                                                                   stratify=stratify,
+                                                                                                   train_size=train_size)
+                                                    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)
 
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)

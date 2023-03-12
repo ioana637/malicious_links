@@ -75,11 +75,11 @@ def determine_top_configuration(df, top_k = 20):
 def main_data_post():
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     # my_filename = os.path.join(path_to_script, 'new_results/knn', filename) # for Linux
-    my_filename = os.path.join(path_to_script, 'new_results\\rfc',
-                                'metrics_DN_min_max_RFC_train_size_80_with_stratify_13_02_2023_10_06.csv')
+    my_filename = os.path.join(path_to_script, 'new_results\\svm',
+                                'metrics_DN_standard_SVM_sigmoid_kernel_train_size_80_with_stratify_25_02_2023_19_51.csv')
                                 # 'metrics_DN_standard_KNN_train_size_80_with_stratify_13_02_2023_10_03.csv')
-    my_filename_1 = os.path.join(path_to_script, 'new_results\\rfc',
-                               'metrics_DN_standard_RFC_train_size_80_with_stratify_13_02_2023_10_06.csv')
+    my_filename_1 = os.path.join(path_to_script, 'new_results\\svm',
+                               'metrics_DN_min_max_SVM_sigmoid_kernel_train_size_80_with_stratify_25_02_2023_19_51.csv')
     df1 = load_results_from_file(my_filename)
     df2 = load_results_from_file(my_filename_1)
     df = df1.append(df2)

@@ -1,0 +1,153 @@
+MLP---------------
+
+max_iter = 100 (default)
+hidden layer sizes = [i, j, k] def: 35, 100, 100
+i = [25, 35,50, 75, 100, 125, 150, 175]
+i = 10 ...200
+j = [25, 50, 75, 100, 125, 150, 175]
+j = 10 ...200
+k = [25, 50, 75, 100, 125, 150, 175]
+k = 10 ...200
+batch size = 1 (Def)
+activation relu (def)
+solver adam + sgd (adam - def)
+alpha 0.0001 (def)
+learning rate constant (def)
+learning_rate_init -> 0.0007, 0.0006, 0.0013 (def: 0.001)
+[0.0005, 0.002] - random values
+power_t 0.5 (def)
+shuffle True (def)
+momentum 0.9 (def)
+nesterovs_momentum True (def)
+early stopping False (def)
+validation fraction = 0.1 (def)
+beta_1 -> 0.9 (def) 
+beta_2 -> 0.999 (def)
+epsilon -> 1e-17, 1e-08 -> def
+n_iter_no_change 10 -> def si 18
+max_fun: 15000 - def
+
+
+LR
+solver = liblinear
+fit intercept = True
+penalty = l1, l2
+max_iter = [100, 300, 1]
+intercept scaling = [10, 70, 1] + [100, 115, 1] + [122, 142, 1] +
+[165, 209, 1] + [223, 300, 1]
+class weight = balanced
+multiclass = auto
+dual = false
+tol 0.0001
+C 1
+
+ADA
+n_estimators -> [ 41  47  50  53  59  61  71  79  83  91  93 105 115 125 130 150 185
+ 350, 650]
+[31, 160, 1] + [175, 195, 1] + [340, 360, 1]
+learning_rate -> [0.85 1.  ]
+0.7-1.2
+algorithm -> ['SAMME' 'SAMME.R']
+
+GPC
+
+kernel -> [None 'DotProduct(sigma_0=1)' ]
+n_restarts_optimizer -> [  0   3  11  16 100 200 375 450 475]
+[0, 26, 1] + [90, 110,1] + [190, 210, 1] + [365, 385, 1] + [440, 485, 1]
+max_iter_predict -> [ 40  58  68  83  85 100 102 122 128 129 140 800]
+[30, 150, 1]+[795, 805, 1]
+copy_X_train -> [False  True]
+multi_class -> ['one_vs_one' 'one_vs_rest']
+
+
+BNB
+alpha -> [0.1 0.2 0.3 0.5 0.6 0.7 0.8 1.2 1.4 1.7 1.8 2. ]
+fit_prior -> [False  True]
+binarize -> [0.4 0.6 0.7 0.8]
+
+
+GNB
+var_smoothing -> [1.00000000e-12 3.41214374e-10 4.71881175e-10 5.70570029e-10
+ 6.82470434e-10 6.85052961e-10 7.20258753e-10 8.31009460e-10
+ 9.58005400e-10 1.17219502e-09 3.25224993e-09 3.39762429e-09
+ 4.98089594e-09 5.07068329e-09 5.65870036e-09 5.79563434e-09
+ 7.26141187e-09 8.33867488e-09 9.18801702e-09 9.50681966e-09]
+
+QDA - iese din discutie
+
+LDA
+tol -> [1.e-07 1.e-06 1.e-05 1.e-04 1.e-03 1.e-02]
+solver -> ['eigen' 'lsqr' 'svd']
+shrinkage -> ['0.5' None'0.1'   'auto' '0.3' ]
+n_components -> [ 0.  1. None]
+store_covariance -> [False  True]
+covariance_estimator -> 
+[None 'EmpiricalCovariance(assume_centered=True)' ]
+
+XGB
+loss -> ['deviance' 'exponential']--
+learning_rate -> [0.1 0.8]--
+n_estimators -> [ 81 100 130]--
+subsample -> [0.4 1. ]---
+criterion -> ['friedman_mse']---
+min_samples_split -> [ 0.6  2.  11. ]--
+min_samples_leaf -> [1. 8.]--
+min_weight_fraction_leaf -> [0. 0.015 0.035 0.045]--
+max_depth -> [3] -- 
+min_impurity_decrease -> [0.]
+init -> None
+max_features -> [None '0.85' ]--
+max_leaf_nodes -> [  6.  55. 180. 250.  None]---
+validation_fraction -> [0.1 0.3]--
+n_iter_no_change -> [ 11. 450. 650. 850.  None]--
+tol -> [0.0001]
+ccp_alpha -> [0.]
+
+SVM with poly 
+gamma -> ['0.008' '0.04' '0.08' '0.15000000000000002' '0.18' '0.20400000000000001'
+ '0.304' '0.307' '0.46' '0.5' '0.504' '0.507' '0.606' '0.705' '0.901'
+ '0.907' '0.93' '0.9400000000000001']
+cache_size -> [200]
+coef0 -> [  2.5  12.5  20.   30.   40.  100.  150.  175.  200.  300. ]
+tol -> [0.0001]
+C -> [1.]
+shrinking -> [ True]
+class_weight -> ['balanced']
+max_iter -> [1000]
+degree -> [2, 3, 4, 5, 6, 7, 9, 10, 12, 13, 16, 18, ]
+todo nu este degree la export!!!
+
+
+
+SVM with RBF--
+gamma -> ['0.903' '0.906' 'scale']-
+cache_size -> [190 200 210 240 450]-
+tol -> [0.0001]
+C -> [ 1.   1.2  1.9 10.  15.  20.  30.  40. ]-
+shrinking -> [False  True]-
+class_weight -> ['balanced']
+max_iter -> [ 300  800  900 1000 1025 1300 1500]-
+
+
+
+SVM linear-------
+decision_function_shape -> ['ovr']
+cache_size -> [200 450 650 700]
+tol -> [1.e-08 1.e-06 1.e-05 1.e-04 1.e-03 1.e-02]
+C -> [1.  1.4 1.5 1.7 1.8 4. ]
+shrinking -> [False  True]
+class_weight -> ['balanced']
+max_iter -> [ 500 1000 1100 1200 1400 1600 2000]
+
+
+SVM sigmoid------------
+gamma -> ['0.001' '0.002' '0.003' '0.005' '0.006' '0.007' '0.008' '0.009' '0.01'
+ '0.02' '0.10400000000000001' '0.18' '0.26']
+cache_size -> [200] --
+coef0 -> [0.001  0.005  0.0075 0.01   0.025  0.05   0.075  0.1    0.25   0.5
+ 0.75   1.    ]
+tol -> [0.0001]
+C -> [1.]
+shrinking -> [ True]--
+class_weight -> ['balanced']
+max_iter -> [1000]
