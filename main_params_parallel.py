@@ -5,9 +5,9 @@ from datetime import datetime
 from algorithms.ada import run_algorithm_ada_boost
 from algorithms.gpc import run_algorithm_gpc
 from algorithms.lr import run_algorithm_lr
-from algorithms.mlp import run_algorithm_MLP
+from algorithms.mlp import run_algorithm_MLP_parallel
 from algorithms.nb import run_algorithm_bnb, run_algorithm_gnb
-from algorithms.qlda import run_algorithm_lda, run_algorithm_qda
+from algorithms.qlda import run_algorithm_lda
 from algorithms.svm import run_algorithm_SVC_linear_kernel, run_algorithm_SVC_sigmoid_kernel, \
     run_algorithm_SVC_RBF_kernel, run_algorithm_SVC_poly_kernel
 from algorithms.xgb import run_algorithm_xgb
@@ -15,25 +15,24 @@ from algorithms.xgb import run_algorithm_xgb
 now = datetime.now()
 dt_string = now.strftime("%d_%m_%Y_%H_%M")
 
-
-def main_mlp():
+def parallel_main_mlp():
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     for train_size in [0.8]:
-        run_algorithm_MLP('metrics_DN_standard_MLP_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_MLP('metrics_DN_min_max_MLP_train_size_' + str(
+        run_algorithm_MLP_parallel('metrics_DN_min_max_MLP_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
                           stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
+        run_algorithm_MLP_parallel('metrics_DN_standard_MLP_train_size_' + str(
+            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
+                                   stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
 
 
 def main_SVM_linear():
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     for train_size in [0.8]:
-        run_algorithm_SVC_linear_kernel('metrics_DN_standard_SVC_linear_kernel_train_size_' + str(
+        run_algorithm_SVC_linear_kernel_parallel('metrics_DN_standard_SVC_linear_kernel_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
                                         stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_SVC_linear_kernel('metrics_DN_min_max_SVC_linear_kernel_train_size_' + str(
+        run_algorithm_SVC_linear_kernel_parallel('metrics_DN_min_max_SVC_linear_kernel_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
                                         stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
 
@@ -152,7 +151,7 @@ def main():
     # print("\nName of Python script:", sys.argv[0])
     alg = sys.argv[1]
     if alg == 'mlp':
-        main_mlp()
+        parallel_main_mlp()
     elif alg == 'svc-linear':
         main_SVM_linear()
     elif alg == 'svc-rbf':
@@ -175,6 +174,5 @@ def main():
         main_ada()
 
 # TODO test and run on server
-
 if __name__ == "__main__":
     main()

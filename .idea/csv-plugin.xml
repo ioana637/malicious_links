@@ -38,7 +38,21 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\new_results\ada\metrics_DN_standard_ADA_BOOST_train_size_80_with_stratify_25_02_2023_19_53.csv">
+        <entry key="\new_results\ada\metrics_DN_min_max_ADA_BOOST_train_size_80_with_stratify_12_03_2023_18_49.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\ada\metrics_DN_standard_ADA_BOOST_train_size_80_with_stratify_12_03_2023_18_49.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\dt\metrics_DN_standard_DT_train_size_80_with_stratify_13_02_2023_08_58.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -94,14 +108,28 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\new_results\svm\metrics_DN_min_max_SVC_linear_kernel_train_size_80_with_stratify_25_02_2023_19_51.csv">
+        <entry key="\new_results\nb\metrics_DN_min_max_BNB_train_size_80_with_stratify_12_03_2023_18_48.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\new_results\svm\metrics_DN_standard_SVC_linear_kernel_train_size_80_with_stratify_25_02_2023_19_51.csv">
+        <entry key="\new_results\nb\metrics_DN_standard_BNB_train_size_80_with_stratify_12_03_2023_18_48.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\svm\metrics_DN_min_max_SVM_sigmoid_kernel_train_size_80_with_stratify_12_03_2023_18_47.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\svm\metrics_DN_standard_SVM_sigmoid_kernel_train_size_80_with_stratify_12_03_2023_18_47.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -179,6 +207,20 @@
           </value>
         </entry>
         <entry key="\results\knn\top20_KNN_train_size_80_with_stratify_DN_standard.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\results\mlp\metrics_DN_min_max_MLP_train_size_80_with_stratify_30_03_2023_14_54.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\results\mlp\metrics_DN_standard_MLP_train_size_80_with_stratify_30_03_2023_14_54.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

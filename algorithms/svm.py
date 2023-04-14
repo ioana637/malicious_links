@@ -1,5 +1,6 @@
 import os
 from itertools import chain
+from multiprocessing import Pool, Manager
 
 import numpy as np
 from sklearn.svm import SVC
@@ -9,7 +10,41 @@ from data_pre import split_data_in_testing_training, load_normalized_dataset
 
 warnings.filterwarnings("error")
 
-from utils import prediction, cal_metrics, appendMetricsTOCSV
+from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
+
+
+def run_algorithm_SVC_linear_kernel_configuration_parallel(X, y, q_metrics,
+                                                           tol=1e-4, C=1.0, shrinking=True, cache_size=200,
+                                                           class_weight='balanced', max_iter=1000,
+                                                           decision_function_shape='ovr',
+                                                           stratify=False, train_size=0.8):
+    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    try:
+        # Creating the classifier object
+        classifier = SVC(probability=True, kernel='linear', tol=tol, shrinking=shrinking, cache_size=cache_size,
+                         C=C, class_weight=class_weight, max_iter=max_iter,
+                         decision_function_shape=decision_function_shape)
+
+        # Performing training
+        classifier.fit(X_train, y_train)
+
+        # Make predictions
+        y_pred, y_pred_probabilities = prediction(X_test, classifier)
+
+        # Compute metrics
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities)
+        label = 'SVM with linear kernel'
+        string_results_for_queue = convert_metrics_to_csv(',', label, tol, C, max_iter, shrinking, cache_size,
+                                                          class_weight,
+                                                          decision_function_shape, precision, recall, f1, roc_auc)
+
+        q_metrics.put(string_results_for_queue)
+    except Exception as err:
+        # pass
+        print(err)
+    except RuntimeWarning as warn:
+        print(warn)
+        # pass
 
 
 def run_algorithm_SVC_linear_kernel_configuration(metrics, label, X, y,
@@ -35,7 +70,7 @@ def run_algorithm_SVC_linear_kernel_configuration(metrics, label, X, y,
         y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
         # Compute metrics
-        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities)
         metrics['label'].append(label)
 
         metrics['tol'].append(tol)
@@ -64,6 +99,49 @@ def init_metrics_for_SVM_with_linear_kernel():
             'class_weight': [], 'max_iter': [],
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
+
+
+def run_algorithm_SVC_linear_kernel_parallel(filename='', path='', stratify=False, train_size=0.8,
+                                             normalize_data=False, scaler='min-max'):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_SVM_with_linear_kernel()
+    my_filename = os.path.join(path, 'results/svc', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_SVM_with_linear_kernel, header=True)
+    max_iter_list = list(chain([-1], range(450, 550, 10), range(950, 1250, 10), range(1350, 1450, 10),
+                               range(1550, 1650, 10), range(1950, 2050, 10)))
+    shrinking_list = [True, False]
+    C_list = list(chain([1, 1.4, 1.5, 1.6, 1.7, 1.8, 4], np.random.uniform(low=1.0, high=4.5, size=(10,))))
+    tol_list = list(chain([1e-8, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, ], np.random.uniform(low=1e-2, high=1e-9, size=(10,))))
+    cache_size_list = list(chain(range(195, 205, 2), range(445, 455, 2), range(645, 655, 2), range(695, 705, 2)))
+
+    # count = len(max_iter_list) * len(i_list) * len(j_list) * len(k_list) * len(n_iter_no_change_list) * \
+    #         len(epsilon_list) * len(learning_rate_init_list) * len(solver_list) * len(activation_list)
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(14) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for shrinking in shrinking_list:
+                for C in C_list:
+                    for tol in tol_list:
+                        for max_iter in max_iter_list:
+                            for cache_size in cache_size_list:
+                                job = pool.apply_async(run_algorithm_SVC_linear_kernel_configuration_parallel,
+                                                       (X, y, q_metrics,
+                                                        tol, C, shrinking, cache_size, 'balanced', max_iter, 'ovr',
+                                                        stratify, train_size))
+                                # print(job)
+                                jobs.append(job)
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()
 
 
 def run_algorithm_SVC_linear_kernel(filename='', path='', stratify=False, train_size=0.8,
@@ -164,6 +242,34 @@ def run_algorithm_SVC_linear_kernel(filename='', path='', stratify=False, train_
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_SVM_with_linear_kernel)
 
 
+def run_algorithm_SVC_RBF_kernel_configuration_parallel(X, y, q_metrics, tol=1e-4, C=1.0, shrinking=True,
+                                                        cache_size=200,
+                                                        class_weight='balanced', max_iter=1000, gamma='scale',
+                                                        stratify=False,
+                                                        train_size=0.8):
+    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    try:
+        # Creating the classifier object
+        classifier = SVC(probability=True, kernel='rbf', tol=tol, shrinking=shrinking, cache_size=cache_size,
+                         C=C, class_weight=class_weight, max_iter=max_iter, gamma=gamma)
+        # Performing training
+        classifier.fit(X_train, y_train)
+        # Make predictions
+        y_pred, y_pred_probabilities = prediction(X_test, classifier)
+        label = 'SVM with RBF kernel'
+        # Compute metrics
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        queue_results_to_csv = convert_metrics_to_csv(',', label, tol, C, shrinking, cache_size, class_weight, max_iter,
+                                                      gamma, precision, recall, f1, roc_auc)
+        q_metrics.put(queue_results_to_csv)
+    except Exception as err:
+        print(err)
+        # pass
+    except RuntimeWarning as warn:
+        print(warn)
+        # pass
+
+
 def run_algorithm_SVC_RBF_kernel_configuration(metrics, label, X, y,
                                                tol=1e-4,
                                                C=1.0,
@@ -216,6 +322,51 @@ def init_metrics_for_SVM_with_RBF_kernel():
             'tol': [], 'C': [], 'shrinking': [], 'class_weight': [], 'max_iter': [],
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
+
+
+def run_algorithm_SVC_RBF_kernel_parallel(filename='', path='', stratify=False, train_size=0.8,
+                                          normalize_data=False, scaler='min-max'):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_SVM_with_RBF_kernel()
+    my_filename = os.path.join(path, 'results/svc', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_SVM_with_RBF_kernel, header=True)
+    max_iter_list = list(chain(range(295, 305, 2), range(795, 805, 2), range(895, 905, 2),
+                               range(995, 1005, 2), range(1020, 1030, 2), range(1295, 1305, 2), range(1495, 1505, 2),
+                               [-1]))
+    shrinking_list = [True, False]
+    gamma_list = list(chain(['scale'], [0.890, 0.892, 0.894, 0.896, 0.898, 0.9, 0.901, 0.902, 0.903,
+                                        0.904, 0.905, 0.906, 0.907, 0.908, 0.909, 0.91, 0.92, 0.93, 0.94, 0.95,
+                                        0.96, 0.97, 0.98, 0.99]))
+    C_list = list(chain(range(5, 45, 2), np.random.uniform(low=1.0, high=2.5, size=(10,))))
+    cache_size_list = list(chain(range(185, 215, 5), range(235, 245, 2), range(445, 455, 2)))
+
+    # count = len(max_iter_list) * len(i_list) * len(j_list) * len(k_list) * len(n_iter_no_change_list) * \
+    #         len(epsilon_list) * len(learning_rate_init_list) * len(solver_list) * len(activation_list)
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(14) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for shrinking in shrinking_list:
+                for max_iter in max_iter_list:
+                    for cache_size in cache_size_list:
+                        for gamma in gamma_list:
+                            for C in C_list:
+                                job = pool.apply_async(run_algorithm_SVC_RBF_kernel_configuration_parallel,
+                                                       (X, y, q_metrics, 1e-4, C, shrinking, cache_size, 'balanced',
+                                                        max_iter, gamma, stratify, train_size))
+                                # print(job)
+                                jobs.append(job)
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()
 
 
 def run_algorithm_SVC_RBF_kernel(filename='', path='', stratify=False, train_size=0.8,

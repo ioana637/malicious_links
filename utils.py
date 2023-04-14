@@ -5,15 +5,24 @@ from time import sleep
 import pandas as pd
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
 from sklearn.metrics import precision_score, recall_score, f1_score, roc_curve, roc_auc_score
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 
+def convert_metrics_to_csv(separator=',', *args):
+    string_args = ''
+    for arg in args:
+        if isinstance(arg, list):
+            arg = '"' + str(arg) + '"'
+        if (string_args == ''):
+            string_args = str(arg)
+        else:
+            string_args = string_args + separator + str(arg)
+    return string_args
 
-def split_data(X, y, normalize_data = False, stratify = False, train_size = 0.8, scaler = 'min-max'):
+
+def split_data(X, y, normalize_data=False, stratify=False, train_size=0.8, scaler='min-max'):
     # # Split df into X and y
     # y = df['label'].copy()
     # X = df.drop('label', axis=1).copy()
@@ -35,7 +44,7 @@ def split_data(X, y, normalize_data = False, stratify = False, train_size = 0.8,
         scaled_df = pd.DataFrame(d, columns=names)
         # print(scaled_df.head())
     else:
-        scaled_df = X.copy(deep = True)
+        scaled_df = X.copy(deep=True)
 
     # Train-test split
     if (stratify == True):
@@ -46,8 +55,7 @@ def split_data(X, y, normalize_data = False, stratify = False, train_size = 0.8,
     return X_train, X_test, y_train, y_test
 
 
-
-def data_normalization(X, y, stratify = False, train_size = 0.8):
+def data_normalization(X, y, stratify=False, train_size=0.8):
     # Split df into X and y
     # y = df['label'].copy()
     # X = df.drop('label', axis=1).copy()
@@ -57,7 +65,6 @@ def data_normalization(X, y, stratify = False, train_size = 0.8):
     # scaled_df = pd.DataFrame(d, columns=names)
     # scaled_df.head()
 
-
     # Normalize with MinMaxScaler
     scaler = preprocessing.MinMaxScaler()
     names = X.columns
@@ -66,19 +73,24 @@ def data_normalization(X, y, stratify = False, train_size = 0.8):
 
     # Train-test split
     if (stratify):
-        X_train, X_test, y_train, y_test = train_test_split(scaled_df, y, stratify=y, train_size = train_size)
+        X_train, X_test, y_train, y_test = train_test_split(scaled_df, y, stratify=y, train_size=train_size)
     else:
-        X_train, X_test, y_train, y_test = train_test_split(scaled_df, y, train_size = train_size)
-
+        X_train, X_test, y_train, y_test = train_test_split(scaled_df, y, train_size=train_size)
 
     return X_train, X_test, y_train, y_test
 
-
-
+def listener_write_to_file(q, filename):
+    '''listens for messages on the q, writes to file. '''
+    with open(filename, 'a') as f:
+        while 1:
+            m = q.get()
+            if m == 'kill':
+                break
+            f.write(m + '\n')
+            f.flush()
 
 # Function to make predictions
 def prediction(X_test, clf_object):
-
     # Predicton on test
     y_pred = clf_object.predict(X_test)
     y_pred_probabilities = clf_object.predict_proba(X_test)
@@ -88,9 +100,9 @@ def prediction(X_test, clf_object):
     # print(y_pred_probabilities)
     return y_pred, y_pred_probabilities
 
+
 # Function to calculate accuracy
 def cal_metrics(y_test, y_pred, y_pred_probabilities, classifier):
-
     # print("\n-----------------------------------------------")
     # print("METRICS FOR "+ classifier)
     # print("-----------------------------------------------\n")
@@ -98,19 +110,19 @@ def cal_metrics(y_test, y_pred, y_pred_probabilities, classifier):
     # print("Confusion Matrix: ",
     #     confusion_matrix(y_test, y_pred))
 
-    precision = precision_score(y_test,y_pred, pos_label=1, average='binary')*100
+    precision = precision_score(y_test, y_pred, pos_label=1, average='binary') * 100
     # print ("Precision : ", precision)
 
-    recall = recall_score(y_test,y_pred)*100
+    recall = recall_score(y_test, y_pred) * 100
     # print ("Recall : ", recall)
 
-    f1 = f1_score(y_test,y_pred,  average='weighted', labels=np.unique(y_pred))*100
+    f1 = f1_score(y_test, y_pred, average='weighted', labels=np.unique(y_pred)) * 100
     # print ("F1 score : ",f1)
 
     roc_auc = 0.0
     if (len(y_pred_probabilities) > 0):
         try:
-            roc_auc = roc_auc_score(y_test, y_pred_probabilities[:,1], average='weighted', labels=np.unique(y_pred))
+            roc_auc = roc_auc_score(y_test, y_pred_probabilities[:, 1], average='weighted', labels=np.unique(y_pred))
             # print ("ROC_AUC score: ", roc_auc)
         except:
             pass
@@ -129,15 +141,18 @@ def cal_metrics(y_test, y_pred, y_pred_probabilities, classifier):
 
     return precision, recall, f1, roc_auc
 
+
 def unique(list1):
     x = np.array(list1)
     return np.unique(x)
 
+
 def print_dict(dictionary):
     for k, v in dictionary.items():
-        print(k,'->', v)
+        print(k, '->', v)
 
-def appendMetricsTOCSV(filename, metrics, init_function, header = False, ):
+
+def appendMetricsTOCSV(filename, metrics, init_function, header=False, ):
     df = pd.DataFrame(metrics)
     # append data frame to CSV file
     try:
@@ -149,13 +164,14 @@ def appendMetricsTOCSV(filename, metrics, init_function, header = False, ):
     return init_function()
 
 
-def write_error_to_log_file( e, log_file = 'logs.txt'):
+def write_error_to_log_file(e, log_file='logs.txt'):
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     my_filename = os.path.join(path_to_script, log_file)
 
     #   Open a file with access mode 'a'
     with open(my_filename, "a+") as file_object:
         file_object.write(f'{str(e)}\n\n')
+
 
 def convert_string_to_datetime(string):
     data = None
