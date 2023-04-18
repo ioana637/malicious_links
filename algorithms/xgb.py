@@ -1,6 +1,8 @@
 import os
+import traceback
 import warnings
 from itertools import chain
+from multiprocessing import Manager, Pool
 
 import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
@@ -9,7 +11,81 @@ from data_pre import split_data_in_testing_training, load_normalized_dataset
 
 warnings.filterwarnings("error")
 
-from utils import prediction, cal_metrics, appendMetricsTOCSV
+from utils import prediction, cal_metrics, appendMetricsTOCSV, listener_write_to_file, convert_metrics_to_csv
+
+
+def run_algorithm_gradient_boost_configuration_parallel(X, y, q_metrics,
+                                               loss='deviance',
+                                               learning_rate=0.1,
+                                               n_estimators=100,
+                                               subsample=1.0,
+                                               criterion='friedman_mse',
+                                               min_samples_split=2,
+                                               min_samples_leaf=1,
+                                               min_weight_fraction_leaf=0.0,
+                                               max_depth=3,
+                                               min_impurity_decrease=0.0,
+                                               init=None,
+                                               max_features=None,
+                                               max_leaf_nodes=None,
+                                               validation_fraction=0.1,
+                                               n_iter_no_change=None,
+                                               tol=1e-4,
+                                               ccp_alpha=0.0,
+                                               stratify=False, train_size=0.8):
+    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    try:
+        # Creating the classifier object
+        classifier = GradientBoostingClassifier(loss=loss, learning_rate=learning_rate,
+                                                n_estimators=n_estimators, subsample=subsample,
+                                                criterion=criterion, min_samples_split=min_samples_split,
+                                                min_samples_leaf=min_samples_leaf,
+                                                min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                                max_depth=max_depth, min_impurity_decrease=min_impurity_decrease,
+                                                init=init, max_features=max_features,
+                                                max_leaf_nodes=max_leaf_nodes, validation_fraction=validation_fraction,
+                                                n_iter_no_change=n_iter_no_change, tol=tol,
+                                                ccp_alpha=ccp_alpha,
+                                                )
+        # Performing training
+        classifier.fit(X_train, y_train)
+
+        # Make predictions
+        y_pred, y_pred_probabilities = prediction(X_test, classifier)
+
+        # Compute metrics
+        label = create_label_for_XGB(loss, learning_rate, n_estimators, subsample, criterion, min_samples_split,
+                                     min_samples_leaf, min_weight_fraction_leaf, max_depth, min_impurity_decrease, init,
+                                     max_features, max_leaf_nodes, validation_fraction, n_iter_no_change, tol, ccp_alpha)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
+        string_results_for_queue = convert_metrics_to_csv(',', label,
+                                                          loss, learning_rate, n_estimators, subsample, criterion,
+                                                          min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
+                                                          max_depth, min_impurity_decrease, init, max_features,
+                                                          max_leaf_nodes, validation_fraction, n_iter_no_change, tol,
+                                                          ccp_alpha, precision, recall, f1, roc_auc)
+        q_metrics.put(string_results_for_queue)
+    except Exception as er:
+        # pass
+        print(er)
+        # traceback.print_exc()
+        # print(traceback.format_exc())
+    except RuntimeWarning as warn:
+        # pass
+        print(warn)
+
+
+def create_label_for_XGB(loss, learning_rate, n_estimators, subsample, criterion,
+                         min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
+                         max_depth, min_impurity_decrease, init, max_features,
+                         max_leaf_nodes, validation_fraction, n_iter_no_change, tol,
+                         ccp_alpha):
+    return "XGB, loss="+loss+", learning_rate=" + str(learning_rate)+", n_estimators=" + str(n_estimators) +", subsample="+\
+        str(subsample)+", criterion="+criterion+", min_samples_split="+str(min_samples_split)+", min_samples_leaf="+\
+        str(min_samples_leaf)+", min_weight_fraction_leaf="+str(min_weight_fraction_leaf) +", max_depth="+str(max_depth)+\
+        ", min_impurity_decrease="+str(min_impurity_decrease)+", init="+str(init)+", max_features="+str(max_features)+\
+        ", max_leaf_nodes="+ str(max_leaf_nodes)+", validation_fraction="+str(validation_fraction)+ ", n_iter_no_change="+\
+        str(n_iter_no_change)+ ", ccp_alpha="+str(ccp_alpha) + ", tol="+str(tol)
 
 
 def run_algorithm_gradient_boost_configuration(metrics, label, X, y,
@@ -649,3 +725,54 @@ def run_algorithm_xgb(filename='', path='', stratify=False, train_size=0.8,
                                                     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)
 
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)
+
+
+def run_algorithm_xgb_parallel(filename='', path='', stratify=False, train_size=0.8,
+                               normalize_data=False, scaler='min-max', no_threads=8):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_XGB()
+    my_filename = os.path.join(path, 'results/xgb', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB, header=True)
+
+    # criterion_list = [ 'squared_error', 'friedman_mse']
+    criterion_list = ['friedman_mse']
+    loss_list= ['exponential', 'log_loss']
+    learning_rate_list = list(chain(np.random.uniform(low=0.05, high=0.15, size=(3,)),
+                               np.random.uniform(low=0.7, high=0.9, size=(3,))))
+    n_estimators_list = [70, 80, 90, 100, 120, 130, 140]
+    min_samples_split_list = list(chain(range(2, 21, 5), [0.6, 0.5, 0.7]))
+    min_samples_leaf_list = list(chain([1, 2, 5, 10, 15], np.random.uniform(0.1, 0.5, (3,))))
+    max_leaf_nodes_list = list(chain([None], [2, 5, 10, 15]))
+    max_depth_list = [1, 3, 5, 7, 9]
+    # 117600
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(no_threads) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for criterion in criterion_list:
+                for loss in loss_list:
+                    for learning_rate in learning_rate_list:
+                        for n_estimators in n_estimators_list:
+                            for min_samples_split in min_samples_split_list:
+                                for min_samples_leaf in min_samples_leaf_list:
+                                    for max_leaf_nodes in max_leaf_nodes_list:
+                                        for max_depth in max_depth_list:
+                                            job = pool.apply_async(run_algorithm_gradient_boost_configuration_parallel,
+                                                                   (X, y, q_metrics, loss, learning_rate, n_estimators, 1.0,
+                                                                    criterion, min_samples_split, min_samples_leaf, 0.0, max_depth,
+                                                                    0.0, None, None, max_leaf_nodes, 0.1, None, 1e-4, 0.0,
+                                                                    stratify, train_size))
+                                    # print(job)
+                                    jobs.append(job)
+
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()

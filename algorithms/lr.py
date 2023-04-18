@@ -1,8 +1,10 @@
 import os
 from itertools import chain
 
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
+from data_post import compute_average_metric
 from data_pre import split_data_in_testing_training, load_normalized_dataset
 from utils import prediction, cal_metrics, appendMetricsTOCSV
 
@@ -52,11 +54,11 @@ def run_algorithm_lr_configuration(metrics, label, X, y,
         metrics['f1_score'].append(f1)
         metrics['roc_auc'].append(roc_auc)
     except Exception as err:
-        pass
-        # print(err)
+        # pass
+        print(err)
     except RuntimeWarning as warn:
-        # print(warn)
-        pass
+        print(warn)
+        # pass
 
 
 def init_metrics_for_LR():
@@ -246,3 +248,57 @@ def run_algorithm_lr(filename='', path='', stratify=False, train_size=0.8,
     # export metrics to CSV FILE
     # df_metrics = pd.DataFrame(metrics)
     # df_metrics.to_csv(my_filename, encoding='utf-8', index=True)
+
+
+def run_best_configs_lr(df_configs, filename='', path='', stratify=True, train_size=0.8,
+                        normalize_data=True, scaler='min-max', n_rep=100):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_LR()
+    my_filename = os.path.join(path, 'new_results/lr', filename)
+
+    for i in range(1, n_rep):
+        for index, row in df_configs.iterrows():
+            label = create_label_LR(row['penalty'], row['dual'], row['tol'], row['C'], row['fit_intercept'],
+                                    row['intercept_scaling'], row['class_weight'], row['random_state'], row['solver'],
+                                    row['max_iter'], row['multi_class'], row['l1_ratio'])
+            run_algorithm_lr_configuration(metrics, label, X, y,
+                                           penalty=row['penalty'], dual=bool(row['dual']), tol=float(row['tol']),
+                                           C=float(row['C']), fit_intercept=bool(row['dual']),
+                                           intercept_scaling=int(row['intercept_scaling']),
+                                           class_weight=row['class_weight'], random_state=None,
+                                           solver=row['solver'],
+                                           max_iter=int(row['max_iter']), multi_class=row['multi_class'],
+                                           l1_ratio=None,
+                                           stratify=stratify, train_size=train_size
+                                           )
+
+    metrics_df = pd.DataFrame(metrics)
+    metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
+                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
+                                                                    'penalty': 'first',
+                                                                    'dual': 'first',
+                                                                    'tol': 'first',
+                                                                    'fit_intercept': 'first',
+                                                                    'intercept_scaling': 'first',
+                                                                    'class_weight': 'first',
+                                                                    'random_state': 'first',
+                                                                    'solver': 'first',
+                                                                    'max_iter': 'first',
+                                                                    'multi_class': 'first',
+                                                                    'l1_ratio': 'first',
+                                                                    'C': 'first'})
+    metrics_df = compute_average_metric(metrics_df)
+    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
+    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_LR, header=True)
+
+
+def create_label_LR(penalty, dual, tol, C, fit_intercept, intercept_scaling, class_weight, random_state, solver,
+                    max_iter, multi_class, l1_ratio):
+    label = "Logistic Regression, penalty=" + str(
+        penalty) + ", dual=" + str(dual) + ", tol=" + str(tol) + ", C=" + str(C) + ", fit_intercept=" + str(
+        fit_intercept) + ", intercept_scaling=" + str(
+        intercept_scaling) + ", class_weight=" + class_weight + ", random_state" + str(
+        random_state) + ", solver=" + solver + ', max_iter=' + str(
+        max_iter) + ', multi_class=' + multi_class + ", l1_ratio=" + \
+            str(l1_ratio)
+    return label

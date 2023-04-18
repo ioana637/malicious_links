@@ -1,178 +1,97 @@
 import os
 import sys
 from datetime import datetime
+import sklearn
 
-from algorithms.ada import run_algorithm_ada_boost
-from algorithms.gpc import run_algorithm_gpc
-from algorithms.lr import run_algorithm_lr
+from algorithms.gpc import run_algorithm_gpc_parallel
 from algorithms.mlp import run_algorithm_MLP_parallel
-from algorithms.nb import run_algorithm_bnb, run_algorithm_gnb
-from algorithms.qlda import run_algorithm_lda
-from algorithms.svm import run_algorithm_SVC_linear_kernel, run_algorithm_SVC_sigmoid_kernel, \
-    run_algorithm_SVC_RBF_kernel, run_algorithm_SVC_poly_kernel
-from algorithms.xgb import run_algorithm_xgb
+from algorithms.svm import run_algorithm_SVC_linear_kernel_parallel, \
+    run_algorithm_SVC_RBF_kernel_parallel
+from algorithms.xgb import run_algorithm_xgb_parallel
 
 now = datetime.now()
 dt_string = now.strftime("%d_%m_%Y_%H_%M")
 
-def parallel_main_mlp():
+def parallel_main_mlp(no_threads):
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     for train_size in [0.8]:
-        run_algorithm_MLP_parallel('metrics_DN_min_max_MLP_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
+        # run_algorithm_MLP_parallel('metrics_DN_min_max_MLP_train_size_' + str(
+        #     int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
+        #                   stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
         run_algorithm_MLP_parallel('metrics_DN_standard_MLP_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                                   stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
+                                   stratify=True, train_size=train_size, normalize_data=True, scaler='standard',
+                                   no_threads=no_threads)
 
 
-def main_SVM_linear():
+def parallel_main_SVM_linear(no_threads):
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     for train_size in [0.8]:
         run_algorithm_SVC_linear_kernel_parallel('metrics_DN_standard_SVC_linear_kernel_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                                        stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
+                                        stratify=True, train_size=train_size, normalize_data=True, scaler='standard',
+                                                 no_threads=no_threads)
         run_algorithm_SVC_linear_kernel_parallel('metrics_DN_min_max_SVC_linear_kernel_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                                        stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
+                                        stratify=True, train_size=train_size, normalize_data=True, scaler='min-max',
+                                                 no_threads=no_threads)
 
-
-def main_SVM_sigmoid():
+def parallel_main_SVM_RBF(no_threads):
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     for train_size in [0.8]:
-        run_algorithm_SVC_sigmoid_kernel('metrics_DN_standard_SVM_sigmoid_kernel_train_size_' + str(
+        run_algorithm_SVC_RBF_kernel_parallel('metrics_DN_standard_SVM_rbf_kernel_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                                         stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_SVC_sigmoid_kernel('metrics_DN_min_max_SVM_sigmoid_kernel_train_size_' + str(
+                                     stratify=True, train_size=train_size, normalize_data=True, scaler='standard',
+                                     no_threads=no_threads)
+        run_algorithm_SVC_RBF_kernel_parallel('metrics_DN_min_max_SVM_rbf_kernel_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                                         stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
+                                     stratify=True, train_size=train_size, normalize_data=True, scaler='min-max',
+                                     no_threads=no_threads)
 
-
-def main_SVM_RBF():
+def parallel_main_xgb(no_threads):
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     for train_size in [0.8]:
-        run_algorithm_SVC_RBF_kernel('metrics_DN_standard_SVM_rbf_kernel_train_size_' + str(
+        run_algorithm_xgb_parallel('metrics_DN_standard_XGB_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                                     stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_SVC_RBF_kernel('metrics_DN_min_max_SVM_rbf_kernel_train_size_' + str(
+                          stratify=True, train_size=train_size, normalize_data=True, scaler='standard',
+                          no_threads=no_threads)
+        run_algorithm_xgb_parallel('metrics_DN_min_max_XGB_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                                     stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
+                          stratify=True, train_size=train_size, normalize_data=True, scaler='min-max',
+                          no_threads=no_threads)
 
 
-def main_SVM_polynomial():
+def parallel_main_gpc(no_threads):
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     for train_size in [0.8]:
-        run_algorithm_SVC_poly_kernel('metrics_DN_standard_SVM_polynomial_kernel_train_size_' + str(
+        run_algorithm_gpc_parallel('metrics_DN_standard_GPC_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                                      stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_SVC_poly_kernel('metrics_DN_min_max_SVM_polynomial_kernel_train_size_' + str(
+                          stratify=True, train_size=train_size, normalize_data=True, scaler='standard',
+                          no_threads=no_threads)
+        run_algorithm_gpc_parallel('metrics_DN_min_max_GPC_train_size_' + str(
             int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                                      stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
-
-def main_ada():
-    path_to_script = os.path.dirname(os.path.abspath(__file__))
-    for train_size in [0.8]:
-        run_algorithm_ada_boost('metrics_DN_standard_ADA_BOOST_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                                stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_ada_boost('metrics_DN_min_max_ADA_BOOST_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                                stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
-
-
-def main_lr():
-    path_to_script = os.path.dirname(os.path.abspath(__file__))
-    for train_size in [0.8]:
-        run_algorithm_lr('metrics_DN_standard_LR_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                         stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_lr('metrics_DN_min_max_LR_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                         stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
-
-
-def main_nb():
-    path_to_script = os.path.dirname(os.path.abspath(__file__))
-    for train_size in [0.8]:
-        run_algorithm_gnb('metrics_DN_standard_GNB_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_gnb('metrics_DN_min_max_GNB_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
-        run_algorithm_bnb('metrics_DN_standard_BNB_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_bnb('metrics_DN_min_max_BNB_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
-
-
-def main_gpc():
-    path_to_script = os.path.dirname(os.path.abspath(__file__))
-    for train_size in [0.8]:
-        run_algorithm_gpc('metrics_DN_standard_GPC_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_gpc('metrics_DN_min_max_GPC_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
-
-
-def main_qlda():
-    path_to_script = os.path.dirname(os.path.abspath(__file__))
-    for train_size in [0.8]:
-        # run_algorithm_qda('metrics_DN_standard_QDA_train_size_' + str(
-        #     int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-        #                   stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        # run_algorithm_qda('metrics_DN_min_max_QDA_train_size_' + str(
-        #     int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-        #                   stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
-        run_algorithm_lda('metrics_DN_standard_LDA_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_lda('metrics_DN_min_max_LDA_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
-
-def main_xgb():
-    path_to_script = os.path.dirname(os.path.abspath(__file__))
-    for train_size in [0.8]:
-        run_algorithm_xgb('metrics_DN_standard_XGB_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='standard')
-        run_algorithm_xgb('metrics_DN_min_max_XGB_train_size_' + str(
-            int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv', path=path_to_script,
-                          stratify=True, train_size=train_size, normalize_data=True, scaler='min-max')
+                          stratify=True, train_size=train_size, normalize_data=True, scaler='min-max',
+                          no_threads=no_threads)
 
 
 def main():
     n = len(sys.argv)
     # print("\nName of Python script:", sys.argv[0])
     alg = sys.argv[1]
+    threads = int(sys.argv[2]) # no. of threads created for running
     if alg == 'mlp':
-        parallel_main_mlp()
+        parallel_main_mlp(threads)
     elif alg == 'svc-linear':
-        main_SVM_linear()
+        parallel_main_SVM_linear(threads)
     elif alg == 'svc-rbf':
-        main_SVM_RBF()
-    elif alg == 'svc-sigmoid':
-        main_SVM_sigmoid()
-    elif alg == 'svc-poly':
-        main_SVM_polynomial()
-    elif alg == 'lr':
-        main_lr()
+        parallel_main_SVM_RBF(threads)
     elif alg == 'xgb':
-        main_xgb()
-    elif alg == 'qlda':
-        main_qlda()
-    elif alg == 'nb':
-        main_nb()
+        parallel_main_xgb(threads)
     elif alg == 'gpc':
-        main_gpc()
-    elif alg == 'ada':
-        main_ada()
+        parallel_main_gpc(threads)
 
-# TODO test and run on server
+
 if __name__ == "__main__":
     main()
+
+

@@ -2,8 +2,10 @@ import os
 from itertools import chain
 import warnings
 
+import pandas as pd
 from sklearn.ensemble import AdaBoostClassifier
 
+from data_post import compute_average_metric
 from data_pre import split_data_in_testing_training, load_normalized_dataset
 
 warnings.filterwarnings("error")
@@ -143,3 +145,33 @@ def run_algorithm_ada_boost(filename='', path='', stratify=False, train_size=0.8
                                                       stratify=stratify, train_size=train_size)
             metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_AdaBoost)
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_AdaBoost)
+
+
+def run_best_configs_ada(df_configs, filename='', path='', stratify=True, train_size=0.8,
+                     normalize_data=True, scaler='min-max', n_rep=100):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_AdaBoost()
+    my_filename = os.path.join(path, 'new_results/ada', filename)
+
+    for i in range(1, n_rep):
+        for index, row in df_configs.iterrows():
+            label = "ADA Boost, base estimator=None, n_estimators=" + str(
+                row['n_estimators']) + ", learning_rate=" + str(row['learning_rate']) + ", algorithm=" + row[
+                        'algorithm']
+            run_algorithm_ada_boost_configuration(metrics, label, X, y,
+                                                  base_estimator=None,
+                                                  n_estimators=int(row['n_estimators']),
+                                                  learning_rate=float(row['learning_rate']),
+                                                  algorithm=row['algorithm'],
+                                                  stratify=stratify, train_size=train_size)
+
+    metrics_df = pd.DataFrame(metrics)
+    metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
+                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
+                                                                    'base_estimator': 'first',
+                                                                    'n_estimators': 'first',
+                                                                    'learning_rate': 'first',
+                                                                    'algorithm': 'first'})
+    metrics_df = compute_average_metric(metrics_df)
+    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
+    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_AdaBoost, header=True)

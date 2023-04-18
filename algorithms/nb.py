@@ -2,8 +2,10 @@ import os
 from itertools import chain
 
 import numpy as np
+import pandas as pd
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 
+from data_post import compute_average_metric
 from data_pre import split_data_in_testing_training, load_normalized_dataset
 from utils import prediction, cal_metrics, appendMetricsTOCSV
 
@@ -165,3 +167,59 @@ def run_algorithm_bnb_configuration(metrics, label, X, y,
     except RuntimeWarning as warn:
         # print(warn)
         pass
+
+
+def run_best_configs_gnb(df_configs, filename='', path='', stratify=True, train_size=0.8,
+                         normalize_data=True, scaler='min-max', n_rep=100):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_GNB()
+    my_filename = os.path.join(path, 'new_results/nb', filename)
+
+    for i in range(1, n_rep):
+        for index, row in df_configs.iterrows():
+            label = create_label_GNB(row['var_smoothing'])
+            run_algorithm_gnb_configuration(metrics, label, X, y,
+                                            var_smoothing=float(row['var_smoothing']),
+                                            stratify=stratify, train_size=train_size)
+
+    metrics_df = pd.DataFrame(metrics)
+    metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
+                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
+                                                                    'var_smoothing': 'first'})
+    metrics_df = compute_average_metric(metrics_df)
+    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
+    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_GNB, header=True)
+
+def create_label_GNB(var_smoothing):
+    label = "Gaussian Naive Bayes, var_smoothing=" + str(var_smoothing)
+    return label
+
+
+def run_best_configs_bnb(df_configs, filename='', path='', stratify=True, train_size=0.8,
+                        normalize_data=True, scaler='min-max', n_rep=100):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_BNB()
+    my_filename = os.path.join(path, 'new_results/nb', filename)
+
+    for i in range(1, n_rep):
+        for index, row in df_configs.iterrows():
+            label = create_label_BNB(row['alpha'], row['binarize'], row['fit_prior'])
+            run_algorithm_bnb_configuration(metrics, label, X, y,
+                                            alpha=float(row['alpha']), binarize=float(row['binarize']),
+                                            fit_prior=bool(row['fit_prior']),
+                                            stratify=stratify, train_size=train_size)
+
+    metrics_df = pd.DataFrame(metrics)
+    metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
+                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
+                                                                    'alpha': 'first',
+                                                                    'binarize': 'first',
+                                                                    'fit_prior': 'first'})
+    metrics_df = compute_average_metric(metrics_df)
+    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
+    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_BNB, header=True)
+
+def create_label_BNB(alpha,binarize, fit_prior):
+    label = "Bernoulli Naive Bayes, alpha=" + str(
+        alpha) + ", binarize=" + str(binarize) + ", fit_prior=" + str(fit_prior)
+    return label

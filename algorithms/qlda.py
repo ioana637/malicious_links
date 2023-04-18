@@ -3,9 +3,11 @@ import warnings
 from itertools import chain
 
 import numpy as np
+import pandas as pd
 from sklearn.covariance import EllipticEnvelope, EmpiricalCovariance, GraphicalLassoCV
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 
+from data_post import compute_average_metric
 from data_pre import split_data_in_testing_training, load_normalized_dataset
 
 warnings.filterwarnings("error")
@@ -27,7 +29,7 @@ def run_algorithm_qda_configuration(metrics, label, X, y, tol=1e-4,
         y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
         # Compute metrics
-        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
         metrics['label'].append(label)
 
         metrics['tol'].append(tol)
@@ -93,7 +95,7 @@ def run_algorithm_lda_configuration(metrics, label, X, y, tol=1e-4,
         y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
         # Compute metrics
-        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
         metrics['label'].append(label)
 
         metrics['tol'].append(tol)
@@ -108,9 +110,12 @@ def run_algorithm_lda_configuration(metrics, label, X, y, tol=1e-4,
         metrics['f1_score'].append(f1)
         metrics['roc_auc'].append(roc_auc)
     except Exception as err:
-        print(err)
+        print("ERROr: "+str(err))
+        print(label)
     except RuntimeWarning as warn:
-        print(warn)
+        print("Warnnnn"+str(warn))
+        print(label)
+
 
 
 def init_metrics_for_LDA():
@@ -419,3 +424,59 @@ def run_algorithm_lda(filename='', path='', stratify=False, train_size=0.8,
                             print(err)
                         metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_LDA)
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_LDA)
+
+
+def run_best_configs_lda(df_configs, filename='', path='', stratify=True, train_size=0.8,
+                         normalize_data=True, scaler='min-max', n_rep=100):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_LDA()
+    my_filename = os.path.join(path, 'new_results/qlda', filename)
+
+    for index, row in df_configs.iterrows():
+        label = create_label_LDA(row['tol'], row['solver'], row['shrinkage'], row['store_covariance'],
+                                 row['n_components'], row['covariance_estimator'])
+        if (row['shrinkage'] == 'None' or row['shrinkage'] == None or str(row['shrinkage']) == 'nan'):
+            shrinkage = None
+        elif (row['shrinkage'] == 'auto'):
+            shrinkage = 'auto'
+        else:
+            shrinkage =float(row['shrinkage'])
+
+        if (row['n_components'] == None or row['n_components'] == 'None' or str(row['n_components']) == 'nan'):
+            n_components = None
+        else:
+            n_components  =int(row['n_components'])
+
+        if (row['covariance_estimator'] == "EmpiricalCovariance(store_precision=True, assume_centered=False)"):
+            covariance_estimator = EmpiricalCovariance(store_precision=True, assume_centered=False)
+        elif (row['covariance_estimator'] == "EmpiricalCovariance(store_precision=False, assume_centered=False)"):
+            covariance_estimator = EmpiricalCovariance(store_precision=False, assume_centered=False)
+        else:
+            covariance_estimator = None
+        for i in range(0, n_rep):
+            run_algorithm_lda_configuration(metrics, label, X, y, tol=float(row['tol']),
+                                            solver=row['solver'], shrinkage=shrinkage,
+                                            store_covariance=bool(row['store_covariance']),
+                                            n_components=n_components, covariance_estimator=covariance_estimator,
+                                            stratify=stratify, train_size=train_size
+                                            )
+
+    metrics_df = pd.DataFrame(metrics)
+    metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
+                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
+                                                                    'tol': 'first',
+                                                                    'solver': 'first',
+                                                                    'shrinkage': 'first',
+                                                                    'store_covariance': 'first',
+                                                                    'n_components': 'first',
+                                                                    'covariance_estimator': 'first'})
+    metrics_df = compute_average_metric(metrics_df)
+    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
+    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_LDA, header=True)
+
+
+def create_label_LDA(tol, solver, shrinkage, store_covariance, n_components, covariance_estimator):
+    label = "Linear Discriminant Analysis, tol=" + str(tol) + ", solver=" + str(solver) + \
+            ', shrinkage=' + str(shrinkage) + ', store_covariance=' + str(store_covariance) + \
+            ", n_components=" + str(n_components) + ", covariance_estimator=" + str(covariance_estimator)
+    return label

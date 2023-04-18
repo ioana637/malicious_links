@@ -118,15 +118,15 @@ def init_metrics_for_MLP():
 
 
 def run_algorithm_MLP_parallel(filename='', path='', stratify=False, train_size=0.8,
-                                      normalize_data=False, scaler='min-max'):
+                               normalize_data=False, scaler='min-max', no_threads=8):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_MLP()
     my_filename = os.path.join(path, 'results/mlp', filename)
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_MLP, header=True)
     max_iter_list = range(100, 200, 25)
-    i_list = range(10, 150, 10)
-    j_list = range(10, 150, 10)
-    k_list = range(10, 150, 10)
+    i_list = range(10, 150, 20)  # au fost cu step = 10
+    j_list = range(10, 150, 20)
+    k_list = range(10, 150, 20)
     n_iter_no_change_list = range(5, 20, 2)
     epsilon_list = [1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11, 1e-14, 1e-15, 1e-16, 1e-17, 1e-18, 1e-19, 1e-20]
     learning_rate_init_list = [0.0005, 0.00055, 0.0006, 0.00065, 0.0007, 0.00075, 0.0008, 0.00085, 0.0009, 0.00095,
@@ -141,25 +141,27 @@ def run_algorithm_MLP_parallel(filename='', path='', stratify=False, train_size=
         q_metrics = manager.Queue()
         jobs = []
 
-        with Pool(14) as pool:
+        with Pool(no_threads) as pool:
             watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
             for max_iter in max_iter_list:
                 for i in i_list:
                     for j in j_list:
                         for k in k_list:
-                            # for n_iter_no_change in n_iter_no_change_list:
-                            #     for epsilon in epsilon_list:
-                            #         for learning_rate_init in learning_rate_init_list:
                             for solver in solver_list:
                                 for activation in activation_list:
                                     job = pool.apply_async(run_algorithm_MLP_configuration_parallel, (X, y, q_metrics,
-                                                                                      max_iter, [i, j, k],
-                                                                                      123, 1, activation,
-                                                                                      solver, 0.0001,
-                                                                                      'constant', 0.001,
-                                                                                      0.5, True, 0.9, True, False,
-                                                                                      0.1, 0.9, 0.999, 1e-8, 10,
-                                                                                      15000, train_size, stratify))
+                                                                                                      max_iter,
+                                                                                                      [i, j, k],
+                                                                                                      123, 1,
+                                                                                                      activation,
+                                                                                                      solver, 0.0001,
+                                                                                                      'constant', 0.001,
+                                                                                                      0.5, True, 0.9,
+                                                                                                      True, False,
+                                                                                                      0.1, 0.9, 0.999,
+                                                                                                      1e-8, 10,
+                                                                                                      15000, train_size,
+                                                                                                      stratify))
                                     # print(job)
                                     jobs.append(job)
             # print(jobs)
@@ -171,6 +173,23 @@ def run_algorithm_MLP_parallel(filename='', path='', stratify=False, train_size=
             pool.close()
             pool.join()
 
+
+def create_label_for_MLP(max_iter, hidden_layer_sizes, random_state, batch_size, activation, solver, alpha,
+                         learning_rate, learning_rate_init, power_t, shuffle, momentum, nesterovs_momentum,
+                         early_stopping, validation_fraction, beta_1, beta_2, epsilon, n_iter_no_change,
+                         max_fun):
+    return "MLP, max_iter = " + str(max_iter) + ", hidden layer sizes=" + str(hidden_layer_sizes) + ", random_state=" + \
+           str(random_state) + ", batch_size=" + str(batch_size) + ", activation=" + str(
+        activation) + ", solver=" + str(solver) + \
+           ", alpha=" + str(alpha) + ", learning_rate=" + str(learning_rate) + ", learning_rate_init=" + str(
+        learning_rate_init) + \
+           ", power_t=" + str(power_t) + ", shuffle=" + str(shuffle) + ", momentum=" + str(
+        momentum) + ", nesterovs_momentum" + \
+           str(nesterovs_momentum) + ", early_stopping=" + str(early_stopping) + ", validation_fraction=" + str(
+        validation_fraction) + \
+           ", beta_1=" + str(beta_1) + ", beta_2=" + str(beta_2) + ", epsilon=" + str(
+        epsilon) + ", n_iter_no_change=" + str(n_iter_no_change) + \
+           ", max_fun=" + str(max_fun)
 
 
 def run_algorithm_MLP_configuration_parallel(X, y, q_metrics,
@@ -202,12 +221,18 @@ def run_algorithm_MLP_configuration_parallel(X, y, q_metrics,
         y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
         # Compute metrics
-        label = 'MLP'
-        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        label = create_label_for_MLP(max_iter, hidden_layer_sizes, random_state, batch_size, activation, solver, alpha,
+                                     learning_rate, learning_rate_init, power_t, shuffle, momentum, nesterovs_momentum,
+                                     early_stopping, validation_fraction, beta_1, beta_2, epsilon, n_iter_no_change,
+                                     max_fun)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
         string_results_for_queue = convert_metrics_to_csv(',', label, max_iter, hidden_layer_sizes, random_state,
-                                                          batch_size, activation, solver, alpha, learning_rate, learning_rate_init,
-                                                          power_t, shuffle, momentum, nesterovs_momentum, early_stopping,
-                                                          validation_fraction, beta_1, beta_2, epsilon, n_iter_no_change,
+                                                          batch_size, activation, solver, alpha, learning_rate,
+                                                          learning_rate_init,
+                                                          power_t, shuffle, momentum, nesterovs_momentum,
+                                                          early_stopping,
+                                                          validation_fraction, beta_1, beta_2, epsilon,
+                                                          n_iter_no_change,
                                                           max_fun, precision, recall, f1, roc_auc)
         q_metrics.put(string_results_for_queue)
     except Exception as err:

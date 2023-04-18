@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 def convert_metrics_to_csv(separator=',', *args):
     string_args = ''
     for arg in args:
-        if isinstance(arg, list):
+        if isinstance(arg, list) or type(arg) == str:
             arg = '"' + str(arg) + '"'
         if (string_args == ''):
             string_args = str(arg)
@@ -102,7 +102,7 @@ def prediction(X_test, clf_object):
 
 
 # Function to calculate accuracy
-def cal_metrics(y_test, y_pred, y_pred_probabilities, classifier):
+def cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier):
     # print("\n-----------------------------------------------")
     # print("METRICS FOR "+ classifier)
     # print("-----------------------------------------------\n")
