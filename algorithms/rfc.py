@@ -1,4 +1,5 @@
 import os
+from random import randint
 
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -7,6 +8,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
+from sklearn.model_selection import RepeatedStratifiedKFold, cross_validate
 
 from data_post import compute_average_metric
 from data_pre import load_normalized_dataset, split_data_in_testing_training
@@ -331,7 +333,7 @@ def run_algorithm_rfc_configuration(metrics, label, X, y,
     y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
     # Compute metrics
-    precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+    precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
     metrics['label'].append(label)
     metrics['criterion'].append(criterion)
     metrics['n_estimators'].append(n_estimators)
@@ -352,6 +354,34 @@ def run_algorithm_rfc_configuration(metrics, label, X, y,
     metrics['recall'].append(recall)
     metrics['f1_score'].append(f1)
     metrics['roc_auc'].append(roc_auc)
+
+def run_algorithm_rfc_configuration_with_k_fold(X, y,
+                                                criterion='gini', n_estimators=100,
+                                                min_samples_leaf=32, min_samples_split=2, max_depth=12,
+                                                max_leaf_nodes=None, max_features='sqrt', min_weight_fraction_leaf=0.0,
+                                                min_impurity_decrease=0.0, bootstrap=True, oob_score=False,
+                                                class_weight='balanced', ccp_alpha=0.0, max_samples=None
+                                                , n_repeats=10, n_splits=5):
+    # Creating the classifier object
+    classifier = RandomForestClassifier(n_estimators=n_estimators, criterion=criterion,
+                                        min_samples_leaf=min_samples_leaf,
+                                        min_samples_split=min_samples_split, max_depth=max_depth,
+                                        max_leaf_nodes=max_leaf_nodes, max_features=max_features,
+                                        min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                        min_impurity_decrease=min_impurity_decrease, bootstrap=bootstrap,
+                                        oob_score=oob_score, class_weight=class_weight, ccp_alpha=ccp_alpha,
+                                        max_samples=max_samples, n_jobs=-1)
+
+    rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=randint(1, 1000000))
+    scores = cross_validate(classifier, X, y, scoring=['precision', 'recall', 'f1', 'roc_auc'], cv=rskf, n_jobs=-1,
+                            return_train_score=False)
+    # report performance
+    print(scores.get('test_precision').mean())
+    print(scores.get('test_recall').mean())
+    print(scores.get('test_f1').mean())
+    print(scores.get('test_roc_auc').mean())
+
+
 
 
 def init_metrics_for_rfc():
@@ -651,3 +681,11 @@ def run_algorithm_rf(filename='', path='', stratify=False, train_size=0.8,
     # df_metrics.to_csv(my_filename, encoding='utf-8', index= True)
     # df_metrics = pd.DataFrame(metrics)
     # df_metrics.to_csv('/content/drive/MyDrive/code/'+filename, encoding='utf-8', index= True)
+
+
+def run_algorithm_rf_with_k_fold(normalize_data=False, scaler='min-max'):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    run_algorithm_rfc_configuration_with_k_fold(X, y, criterion='entropy', n_estimators=110, max_depth=53,
+                                                min_samples_leaf=3, max_leaf_nodes=1564, min_samples_split=4,
+                                                class_weight='balanced',
+                                                n_splits=2, n_repeats=10)

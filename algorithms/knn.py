@@ -1,6 +1,8 @@
 import os
+from random import randint
 
 import pandas as pd
+from sklearn.model_selection import RepeatedStratifiedKFold, cross_validate
 from sklearn.neighbors import KNeighborsClassifier
 
 from data_post import compute_average_metric
@@ -11,9 +13,9 @@ import numpy as np
 from itertools import chain
 
 
-def run_top_20_KNN_configs(filename='', path = '', stratify=False, train_size=0.8,
+def run_top_20_KNN_configs(filename='', path='', stratify=False, train_size=0.8,
                            normalize_data=True, scaler='min-max', n_rep=100):
-    y, X = load_normalized_dataset(file = None, normalize = normalize_data, scaler=scaler)
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_KNN()
 
     # full_path_filename = '/content/drive/MyDrive/code/' + filename
@@ -185,13 +187,14 @@ def run_top_20_KNN_configs(filename='', path = '', stratify=False, train_size=0.
 
     metrics_df = pd.DataFrame(metrics)
     metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
-                                                                    'f1_score':'mean', 'roc_auc': 'mean',
+                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
                                                                     'n_neighbors': 'first', 'weights': 'first',
-                                                                    'algorithm': 'first',  'leaf_size': 'first',
-                                                                    'p': 'first', 'metric': 'first', 'metric_params': 'first'
+                                                                    'algorithm': 'first', 'leaf_size': 'first',
+                                                                    'p': 'first', 'metric': 'first',
+                                                                    'metric_params': 'first'
                                                                     })
     metrics_df = compute_average_metric(metrics_df)
-    metrics_df.sort_values(by =['average_metric'], ascending=False, inplace=True)
+    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_KNN, header=True)
 
 
@@ -228,6 +231,24 @@ def run_algorithm_KNN_configuration(metrics, label, X, y,
     metrics['roc_auc'].append(roc_auc)
 
 
+def run_algorithm_KNN_configuration_with_k_fold(X, y, n_neighbors=5, weights='uniform', algorithm='auto',
+                                                leaf_size=30, p=2, metric='minkowski', metric_params=None, n_splits=5,
+                                                n_repeats=10):
+    # Creating the classifier object
+    classifier = KNeighborsClassifier(n_neighbors=n_neighbors, weights=weights, algorithm=algorithm,
+                                      n_jobs=-1, leaf_size=leaf_size, p=p, metric=metric,
+                                      metric_params=metric_params)
+
+    rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=randint(1, 1000000))
+    scores = cross_validate(classifier, X, y, scoring=['precision', 'recall', 'f1', 'roc_auc'], cv=rskf, n_jobs=-1,
+                            return_train_score=False)
+    # report performance
+    print(scores.get('test_precision').mean())
+    print(scores.get('test_recall').mean())
+    print(scores.get('test_f1').mean())
+    print(scores.get('test_roc_auc').mean())
+
+
 def init_metrics_for_KNN():
     return {'label': [], 'n_neighbors': [], 'weights': [], 'algorithm': [], 'leaf_size': [],
             'p': [], 'metric': [], 'metric_params': [],
@@ -235,9 +256,9 @@ def init_metrics_for_KNN():
             }
 
 
-def run_algorithm_KNN(filename='', path = '', stratify=False, train_size=0.8,
+def run_algorithm_KNN(filename='', path='', stratify=False, train_size=0.8,
                       normalize_data=False, scaler='min-max'):
-    y, X = load_normalized_dataset(file = None, normalize = normalize_data, scaler=scaler)
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_KNN()
 
     # full_path_filename = '/content/drive/MyDrive/code/' + filename
@@ -375,3 +396,11 @@ def run_algorithm_KNN(filename='', path = '', stratify=False, train_size=0.8,
                                                             leaf_size=leaf_size,
                                                             p=p, stratify=stratify, train_size=train_size)
                         metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_KNN)
+
+
+def run_algorithm_KNN_with_k_fold(normalize_data=False, scaler='min-max'):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+
+    run_algorithm_KNN_configuration_with_k_fold(X, y, weights='distance', metric='euclidean', p=5, algorithm='ball_tree',
+                                                n_neighbors=3, leaf_size=86,
+                                                n_splits=2, n_repeats=10)
