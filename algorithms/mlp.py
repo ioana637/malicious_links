@@ -124,9 +124,9 @@ def run_algorithm_MLP_parallel(filename='', path='', stratify=False, train_size=
     my_filename = os.path.join(path, 'results/mlp', filename)
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_MLP, header=True)
     max_iter_list = range(100, 200, 25)
-    i_list = range(10, 150, 20)  # au fost cu step = 10
-    j_list = range(10, 150, 20)
-    k_list = range(10, 150, 20)
+    i_list = range(20, 150, 20)  # au fost cu range(10, 150, 10)
+    j_list = range(20, 150, 20)
+    k_list = range(20, 150, 20)
     n_iter_no_change_list = range(5, 20, 2)
     epsilon_list = [1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11, 1e-14, 1e-15, 1e-16, 1e-17, 1e-18, 1e-19, 1e-20]
     learning_rate_init_list = [0.0005, 0.00055, 0.0006, 0.00065, 0.0007, 0.00075, 0.0008, 0.00085, 0.0009, 0.00095,

@@ -831,7 +831,7 @@ def run_best_configs_SVM_linear(df_configs, filename='', path='', stratify=True,
                         normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_SVM_with_linear_kernel()
-    my_filename = os.path.join(path, 'new_results/svc', filename)
+    my_filename = os.path.join(path, 'new_results/svm', filename)
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():
@@ -877,6 +877,51 @@ def run_best_configs_SVM_linear(df_configs, filename='', path='', stratify=True,
     metrics_df = compute_average_metric(metrics_df)
     metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_SVM_with_linear_kernel, header=True)
+
+def run_best_configs_SVM_RBF(df_configs, filename='', path='', stratify=True, train_size=0.8,
+                             normalize_data=True, scaler='min-max', n_rep=100):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_SVM_with_RBF_kernel()
+    my_filename = os.path.join(path, 'new_results/svm', filename)
+
+    for i in range(1, n_rep):
+        for index, row in df_configs.iterrows():
+            label = create_label_SVM(kernel = 'rbf', tol=row['tol'], C=row['C'],shrinking= row['shrinking'],
+                                     cache_size=row['cache_size'],
+                                     class_weight=row['class_weight'],
+                                     max_iter=row['max_iter'],
+                                     gamma = row['gamma']
+                                     )
+            if (row['gamma'] == 'scale'):
+                gamma= 'scale'
+            else:
+                gamma = float(row['gamma'])
+            run_algorithm_SVC_RBF_kernel_configuration(metrics, label, X, y,
+                                                        tol=float(row['tol']),
+                                                        C=float(row['C']),
+                                                        shrinking=bool(row['shrinking']),
+                                                        cache_size=int(row['cache_size']),
+                                                        class_weight=row['class_weight'],
+                                                        max_iter=int(row['max_iter']),
+                                                        gamma=gamma,
+                                                        stratify=stratify, train_size=train_size
+                                                        )
+
+
+    metrics_df = pd.DataFrame(metrics)
+    metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
+                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
+                                                                    'gamma': 'first',
+                                                                    'cache_size': 'first',
+                                                                    'tol': 'first',
+                                                                    'C': 'first',
+                                                                    'shrinking': 'first',
+                                                                    'class_weight': 'first',
+                                                                    'max_iter': 'first'})
+    metrics_df = compute_average_metric(metrics_df)
+    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
+    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_SVM_with_RBF_kernel, header=True)
+
 
 
 def run_best_configs_SVM_poly(df_configs, filename='', path='', stratify=True, train_size=0.8,
@@ -1023,4 +1068,9 @@ def create_label_SVM(kernel, tol,
             shrinking) + ", cache_size=" + str(
             cache_size) + ", class_weight=" + class_weight + ', max_iter=' + str(
             max_iter) + ', gamma=' + str(gamma) + ", coef0="+str(coef0)
+    elif (kernel=='rbf'):
+        label = "SVM, kernel="+str(kernel)+ ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
+            shrinking) + ", cache_size=" + str(
+            cache_size) + ", class_weight=" + class_weight + ', max_iter=' + str(
+            max_iter) + ', gamma=' + str(gamma)
     return label

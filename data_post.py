@@ -75,27 +75,27 @@ def determine_top_configuration(df, top_k = 20):
 def main_data_post():
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     # my_filename = os.path.join(path_to_script, 'new_results/knn', filename) # for Linux
-    my_filename = os.path.join(path_to_script, 'new_results\\qlda',
-                                'metrics_DN_min_max_LDA_train_size_80_with_stratify_12_03_2023_18_48.csv')
+    my_filename = os.path.join(path_to_script, 'new_results\\xgb',
+                                'metrics_DN_standard_XGB_train_size_80_with_stratify_17_04_2023_18_45.csv')
                                 # 'metrics_DN_standard_KNN_train_size_80_with_stratify_13_02_2023_10_03.csv')
-    my_filename_1 = os.path.join(path_to_script, 'new_results\\qlda',
-                               'metrics_DN_standard_LDA_train_size_80_with_stratify_12_03_2023_18_48.csv')
+    my_filename_1 = os.path.join(path_to_script, 'new_results\\xgb',
+                               'metrics_DN_min_max_XGB_train_size_80_with_stratify_17_04_2023_18_45.csv')
     df1 = load_results_from_file(my_filename)
     df2 = load_results_from_file(my_filename_1)
     df = df1.append(df2)
     df = compute_average_metric(df)
-    print('--------------------- AVERAGE ---------------------')
-    print(compute_average_for_metrics(df))
-    print('--------------------- MAX ---------------------')
-    print(compute_max_for_metrics(df))
-    print('--------------------- MIN ---------------------')
-    print(compute_min_for_metrics(df))
-
-    top_k_df, params = determine_top_configuration(df, top_k=100)
-    print(top_k_df.to_csv('new_results/qlda/best.csv'))
+    # print('--------------------- AVERAGE ---------------------')
+    # print(compute_average_for_metrics(df))
+    # print('--------------------- MAX ---------------------')
+    # print(compute_max_for_metrics(df))
+    # print('--------------------- MIN ---------------------')
+    # print(compute_min_for_metrics(df))
+    #
+    # top_k_df, params = determine_top_configuration(df, top_k=50)
+    # print(top_k_df.to_csv('new_results/xgb/best-xgb.csv'))
     # print_dict(params)
 
-    # compute_avg_for_each_parameter(df)
+    compute_avg_for_each_parameter(df)
 
 if __name__ == "__main__":
     main_data_post()

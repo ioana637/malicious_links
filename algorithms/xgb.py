@@ -5,8 +5,10 @@ from itertools import chain
 from multiprocessing import Manager, Pool
 
 import numpy as np
+import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier
 
+from data_post import compute_average_metric
 from data_pre import split_data_in_testing_training, load_normalized_dataset
 
 warnings.filterwarnings("error")
@@ -15,24 +17,24 @@ from utils import prediction, cal_metrics, appendMetricsTOCSV, listener_write_to
 
 
 def run_algorithm_gradient_boost_configuration_parallel(X, y, q_metrics,
-                                               loss='deviance',
-                                               learning_rate=0.1,
-                                               n_estimators=100,
-                                               subsample=1.0,
-                                               criterion='friedman_mse',
-                                               min_samples_split=2,
-                                               min_samples_leaf=1,
-                                               min_weight_fraction_leaf=0.0,
-                                               max_depth=3,
-                                               min_impurity_decrease=0.0,
-                                               init=None,
-                                               max_features=None,
-                                               max_leaf_nodes=None,
-                                               validation_fraction=0.1,
-                                               n_iter_no_change=None,
-                                               tol=1e-4,
-                                               ccp_alpha=0.0,
-                                               stratify=False, train_size=0.8):
+                                                        loss='deviance',
+                                                        learning_rate=0.1,
+                                                        n_estimators=100,
+                                                        subsample=1.0,
+                                                        criterion='friedman_mse',
+                                                        min_samples_split=2,
+                                                        min_samples_leaf=1,
+                                                        min_weight_fraction_leaf=0.0,
+                                                        max_depth=3,
+                                                        min_impurity_decrease=0.0,
+                                                        init=None,
+                                                        max_features=None,
+                                                        max_leaf_nodes=None,
+                                                        validation_fraction=0.1,
+                                                        n_iter_no_change=None,
+                                                        tol=1e-4,
+                                                        ccp_alpha=0.0,
+                                                        stratify=False, train_size=0.8):
     X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
     try:
         # Creating the classifier object
@@ -56,7 +58,8 @@ def run_algorithm_gradient_boost_configuration_parallel(X, y, q_metrics,
         # Compute metrics
         label = create_label_for_XGB(loss, learning_rate, n_estimators, subsample, criterion, min_samples_split,
                                      min_samples_leaf, min_weight_fraction_leaf, max_depth, min_impurity_decrease, init,
-                                     max_features, max_leaf_nodes, validation_fraction, n_iter_no_change, tol, ccp_alpha)
+                                     max_features, max_leaf_nodes, validation_fraction, n_iter_no_change, tol,
+                                     ccp_alpha)
         precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
         string_results_for_queue = convert_metrics_to_csv(',', label,
                                                           loss, learning_rate, n_estimators, subsample, criterion,
@@ -80,12 +83,17 @@ def create_label_for_XGB(loss, learning_rate, n_estimators, subsample, criterion
                          max_depth, min_impurity_decrease, init, max_features,
                          max_leaf_nodes, validation_fraction, n_iter_no_change, tol,
                          ccp_alpha):
-    return "XGB, loss="+loss+", learning_rate=" + str(learning_rate)+", n_estimators=" + str(n_estimators) +", subsample="+\
-        str(subsample)+", criterion="+criterion+", min_samples_split="+str(min_samples_split)+", min_samples_leaf="+\
-        str(min_samples_leaf)+", min_weight_fraction_leaf="+str(min_weight_fraction_leaf) +", max_depth="+str(max_depth)+\
-        ", min_impurity_decrease="+str(min_impurity_decrease)+", init="+str(init)+", max_features="+str(max_features)+\
-        ", max_leaf_nodes="+ str(max_leaf_nodes)+", validation_fraction="+str(validation_fraction)+ ", n_iter_no_change="+\
-        str(n_iter_no_change)+ ", ccp_alpha="+str(ccp_alpha) + ", tol="+str(tol)
+    return "XGB, loss=" + loss + ", learning_rate=" + str(learning_rate) + ", n_estimators=" + str(
+        n_estimators) + ", subsample=" + \
+           str(subsample) + ", criterion=" + criterion + ", min_samples_split=" + str(
+        min_samples_split) + ", min_samples_leaf=" + \
+           str(min_samples_leaf) + ", min_weight_fraction_leaf=" + str(min_weight_fraction_leaf) + ", max_depth=" + str(
+        max_depth) + \
+           ", min_impurity_decrease=" + str(min_impurity_decrease) + ", init=" + str(init) + ", max_features=" + str(
+        max_features) + \
+           ", max_leaf_nodes=" + str(max_leaf_nodes) + ", validation_fraction=" + str(
+        validation_fraction) + ", n_iter_no_change=" + \
+           str(n_iter_no_change) + ", ccp_alpha=" + str(ccp_alpha) + ", tol=" + str(tol)
 
 
 def run_algorithm_gradient_boost_configuration(metrics, label, X, y,
@@ -128,7 +136,7 @@ def run_algorithm_gradient_boost_configuration(metrics, label, X, y,
         y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
         # Compute metrics
-        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
         metrics['label'].append(label)
 
         metrics['loss'].append(loss)
@@ -154,11 +162,11 @@ def run_algorithm_gradient_boost_configuration(metrics, label, X, y,
         metrics['f1_score'].append(f1)
         metrics['roc_auc'].append(roc_auc)
     except Exception as er:
-        pass
-        # print(er)
+        # pass
+        print(er)
     except RuntimeWarning as warn:
-        pass
-        # print(warn)
+        # pass
+        print(warn)
 
 
 def init_metrics_for_XGB():
@@ -722,7 +730,8 @@ def run_algorithm_xgb(filename='', path='', stratify=False, train_size=0.8,
                                                                                                    n_iter_no_change=n_iter_no_change,
                                                                                                    stratify=stratify,
                                                                                                    train_size=train_size)
-                                                    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)
+                                                    metrics = appendMetricsTOCSV(my_filename, metrics,
+                                                                                 init_metrics_for_XGB)
 
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_XGB)
 
@@ -736,9 +745,9 @@ def run_algorithm_xgb_parallel(filename='', path='', stratify=False, train_size=
 
     # criterion_list = [ 'squared_error', 'friedman_mse']
     criterion_list = ['friedman_mse']
-    loss_list= ['exponential', 'log_loss']
+    loss_list = ['exponential', 'log_loss']
     learning_rate_list = list(chain(np.random.uniform(low=0.05, high=0.15, size=(3,)),
-                               np.random.uniform(low=0.7, high=0.9, size=(3,))))
+                                    np.random.uniform(low=0.7, high=0.9, size=(3,))))
     n_estimators_list = [70, 80, 90, 100, 120, 130, 140]
     min_samples_split_list = list(chain(range(2, 21, 5), [0.6, 0.5, 0.7]))
     min_samples_leaf_list = list(chain([1, 2, 5, 10, 15], np.random.uniform(0.1, 0.5, (3,))))
@@ -761,9 +770,12 @@ def run_algorithm_xgb_parallel(filename='', path='', stratify=False, train_size=
                                     for max_leaf_nodes in max_leaf_nodes_list:
                                         for max_depth in max_depth_list:
                                             job = pool.apply_async(run_algorithm_gradient_boost_configuration_parallel,
-                                                                   (X, y, q_metrics, loss, learning_rate, n_estimators, 1.0,
-                                                                    criterion, min_samples_split, min_samples_leaf, 0.0, max_depth,
-                                                                    0.0, None, None, max_leaf_nodes, 0.1, None, 1e-4, 0.0,
+                                                                   (X, y, q_metrics, loss, learning_rate, n_estimators,
+                                                                    1.0,
+                                                                    criterion, min_samples_split, min_samples_leaf, 0.0,
+                                                                    max_depth,
+                                                                    0.0, None, None, max_leaf_nodes, 0.1, None, 1e-4,
+                                                                    0.0,
                                                                     stratify, train_size))
                                     # print(job)
                                     jobs.append(job)
@@ -776,3 +788,99 @@ def run_algorithm_xgb_parallel(filename='', path='', stratify=False, train_size=
             q_metrics.put('kill')
             pool.close()
             pool.join()
+
+
+def run_best_configs_xgb(df_configs, filename='', path='', stratify=True, train_size=0.8,
+                         normalize_data=True, scaler='min-max', n_rep=100):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_XGB()
+    my_filename = os.path.join(path, 'new_results/xgb', filename)
+
+    for i in range(1, n_rep):
+        for index, row in df_configs.iterrows():
+            # print('index' + str(index))
+            # print(row)
+            label = create_label_for_XGB(loss=row['loss'], learning_rate=row['learning_rate'],
+                                         n_estimators=row['n_estimators'],
+                                         subsample=row['subsample'], criterion=row['criterion'],
+                                         min_samples_split=row['min_samples_split'],
+                                         min_samples_leaf=row['min_samples_leaf'],
+                                         min_weight_fraction_leaf=row['min_weight_fraction_leaf'],
+                                         max_depth=row['max_depth'], min_impurity_decrease=row['min_impurity_decrease'],
+                                         init=row['init'], max_features=row['max_features'],
+                                         max_leaf_nodes=row['max_leaf_nodes'],
+                                         validation_fraction=row['validation_fraction'],
+                                         n_iter_no_change=row['n_iter_no_change'], tol=row['tol'],
+                                         ccp_alpha=row['ccp_alpha']
+                                         )
+
+            if (float(row['min_samples_split']) < 1.0):
+                min_samples_split = float(row['min_samples_split'])
+            else:
+                min_samples_split = int(row['min_samples_split'])
+
+            if (float(row['min_samples_leaf']) < 1.0):
+                min_samples_leaf = float(row['min_samples_leaf'])
+            else:
+                min_samples_leaf = int(row['min_samples_leaf'])
+
+            if (str(row['init']) == 'nan'):
+                init = None
+            else:
+                init = None
+            if (str(row['max_features']) == 'nan'):
+                max_features = None
+            else:
+                max_features = None
+            if (str(row['n_iter_no_change']) == 'nan'):
+                n_iter_no_change = None
+            else:
+                n_iter_no_change = None
+
+            if (row['max_leaf_nodes'] == 'None' or row['max_leaf_nodes'] == None or str(row['max_leaf_nodes']) == 'nan'):
+                max_leaf_nodes = None
+            else:
+                max_leaf_nodes = int(row['max_leaf_nodes'])
+
+            run_algorithm_gradient_boost_configuration(metrics, label, X, y,
+                                                       tol=float(row['tol']), loss=row['loss'],
+                                                       learning_rate=float(row['learning_rate']),
+                                                       n_estimators=int(row['n_estimators']),
+                                                       subsample=int(row['subsample']),
+                                                       criterion=row['criterion'],
+                                                       min_samples_split=min_samples_split,
+                                                       min_samples_leaf=min_samples_leaf,
+                                                       min_weight_fraction_leaf=int(row['min_weight_fraction_leaf']),
+                                                       max_depth=int(row['max_depth']),
+                                                       min_impurity_decrease=int(row['min_impurity_decrease']),
+                                                       init=init, max_features=max_features,
+                                                       max_leaf_nodes=max_leaf_nodes,
+                                                       validation_fraction=float(row['validation_fraction']),
+                                                       n_iter_no_change=n_iter_no_change,
+                                                       ccp_alpha=int(row['ccp_alpha']),
+                                                       stratify=stratify, train_size=train_size
+                                                       )
+
+    metrics_df = pd.DataFrame(metrics)
+    metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
+                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
+                                                                    'loss': 'first',
+                                                                    'learning_rate': 'first',
+                                                                    'n_estimators': 'first',
+                                                                    'subsample': 'first',
+                                                                    'criterion': 'first',
+                                                                    'min_samples_split': 'first',
+                                                                    'min_samples_leaf': 'first',
+                                                                    'min_weight_fraction_leaf': 'first',
+                                                                    'min_impurity_decrease': 'first',
+                                                                    'init': 'first',
+                                                                    'max_features': 'first',
+                                                                    'max_leaf_nodes': 'first',
+                                                                    'validation_fraction': 'first',
+                                                                    'n_iter_no_change': 'first',
+                                                                    'tol': 'first',
+                                                                    'ccp_alpha': 'first',
+                                                                    'max_depth': 'first'})
+    metrics_df = compute_average_metric(metrics_df)
+    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
+    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_XGB, header=True)
