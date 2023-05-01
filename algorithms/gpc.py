@@ -27,7 +27,7 @@ def run_algorithm_gaussian_process_configuration_parallel(X, y, q_metrics,
                                                           multi_class='one_vs_rest',
                                                           stratify=False, train_size=0.8,
                                                           ):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     try:
         # Creating the classifier object
@@ -62,7 +62,7 @@ def run_algorithm_gaussian_process_configuration(metrics, label, X, y,
                                                  multi_class='one_vs_rest',
                                                  stratify=False, train_size=0.8,
                                                  ):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     try:
         # Creating the classifier object

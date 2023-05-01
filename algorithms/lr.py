@@ -1,12 +1,55 @@
 import os
 from itertools import chain
+from multiprocessing import Manager, Pool
 
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
 from data_post import compute_average_metric
 from data_pre import split_data_in_testing_training, load_normalized_dataset
-from utils import prediction, cal_metrics, appendMetricsTOCSV
+from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
+
+
+def run_algorithm_lr_configuration_parallel(X, y, q_metrics,
+                                            penalty='l2', dual=False, tol=1e-4,
+                                            C=1.0, fit_intercept=True, intercept_scaling=1,
+                                            class_weight='balanced', random_state=None, solver='lbfgs',
+                                            max_iter=100, multi_class='auto', l1_ratio=None,
+                                            stratify=False, train_size=0.8
+                                            ):
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
+    try:
+        # Creating the classifier object
+        classifier = LogisticRegression(penalty=penalty, dual=dual, tol=tol, C=C,
+                                        fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
+                                        class_weight=class_weight, random_state=random_state,
+                                        solver=solver, max_iter=max_iter, multi_class=multi_class,
+                                        l1_ratio=l1_ratio)
+        # Performing training
+        classifier.fit(X_train, y_train)
+
+        # Make predictions
+        y_pred, y_pred_probabilities = prediction(X_test, classifier)
+
+        # Compute metrics
+        label = create_label_LR(penalty=penalty, dual=dual, tol=tol, C=C, fit_intercept=fit_intercept,
+                                intercept_scaling=intercept_scaling, class_weight=class_weight,
+                                random_state=random_state, solver=solver, max_iter=max_iter, multi_class=multi_class,
+                                l1_ratio=l1_ratio)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
+        string_results_for_queue = convert_metrics_to_csv(',', label, penalty, dual, tol, C, l1_ratio, fit_intercept,
+                                                          intercept_scaling, class_weight, random_state, solver,
+                                                          max_iter, multi_class, precision, recall, f1, roc_auc)
+        q_metrics.put(string_results_for_queue)
+    except Exception as er:
+        # pass
+        print(er)
+        # traceback.print_exc()
+        # print(traceback.format_exc())
+    except RuntimeWarning as warn:
+        # pass
+        print(warn)
+
 
 
 def run_algorithm_lr_configuration(metrics, label, X, y,
@@ -16,7 +59,7 @@ def run_algorithm_lr_configuration(metrics, label, X, y,
                                    max_iter=100, multi_class='auto', l1_ratio=None,
                                    stratify=False, train_size=0.8
                                    ):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     try:
         # Creating the classifier object
@@ -248,6 +291,47 @@ def run_algorithm_lr(filename='', path='', stratify=False, train_size=0.8,
     # export metrics to CSV FILE
     # df_metrics = pd.DataFrame(metrics)
     # df_metrics.to_csv(my_filename, encoding='utf-8', index=True)
+
+
+def run_algorithm_lr_parallel(filename='', path='', stratify=False, train_size=0.8,
+                               normalize_data=False, scaler='min-max', no_threads=8):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_LR()
+    my_filename = os.path.join(path, 'results/lr', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_LR, header=True)
+
+    solver_list = ['newton-cg', 'liblinear']
+    penalty_list = ['l1', 'l2']
+    max_iter_list = list(range(100, 300, 1))
+    intercept_scaling_list = list(chain(range(10, 70, 1), range(100, 115, 1), range(165, 209, 1), range(223, 300, 1)))
+    # 156800 configs
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(no_threads) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for solver in solver_list:
+                for penalty in penalty_list:
+                    for max_iter in max_iter_list:
+                        for intercept_scaling in intercept_scaling_list:
+                            job = pool.apply_async(run_algorithm_lr_configuration_parallel,
+                                                   (X, y, q_metrics,
+                                                    penalty, False, 1e-4, 1.0, True, intercept_scaling, 'balanced',
+                                                    None, solver, max_iter, 'auto', None,
+                                                    stratify, train_size))
+                            # print(job)
+                            jobs.append(job)
+
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()
 
 
 def run_best_configs_lr(df_configs, filename='', path='', stratify=True, train_size=0.8,

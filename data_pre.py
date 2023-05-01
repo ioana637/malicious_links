@@ -211,6 +211,8 @@ def load_normalized_dataset(file, normalize = False, scaler = 'min-max'):
     # # Split df into X and y
     y = df['Type'].copy()
     X = df.drop('Type', axis=1).copy()
+    # y = df['Type'].copy()
+    # X = df.drop('Type', axis=1).copy()
     return y, X
 
 # y, X = load_normalized_dataset('data/dataset_norm_standard.csv')

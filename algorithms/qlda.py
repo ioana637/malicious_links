@@ -1,6 +1,7 @@
 import os
 import warnings
 from itertools import chain
+from multiprocessing import Manager, Pool
 
 import numpy as np
 import pandas as pd
@@ -11,12 +12,12 @@ from data_post import compute_average_metric
 from data_pre import split_data_in_testing_training, load_normalized_dataset
 
 warnings.filterwarnings("error")
-from utils import prediction, cal_metrics, appendMetricsTOCSV
+from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
 
 
 def run_algorithm_qda_configuration(metrics, label, X, y, tol=1e-4,
                                     stratify=False, train_size=0.8):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     try:
         # Creating the classifier object
@@ -76,12 +77,42 @@ def run_algorithm_qda(filename='', path='', stratify=False, train_size=0.8,
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_QDA)
 
 
+def run_algorithm_lda_configuration_parallel(X, y, q_metrics,
+                                             tol=1e-4, solver='svd', shrinkage=None, store_covariance=False,
+                                             n_components=None, covariance_estimator=None,
+                                             stratify=False, train_size=0.8
+                                             ):
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
+    try:
+        # Creating the classifier object
+        classifier = LinearDiscriminantAnalysis(tol=tol, solver=solver, shrinkage=shrinkage,
+                                                n_components=n_components, store_covariance=store_covariance,
+                                                covariance_estimator=covariance_estimator)
+        # Performing training
+        classifier.fit(X_train, y_train)
+
+        # Make predictions
+        y_pred, y_pred_probabilities = prediction(X_test, classifier)
+
+        # Compute metrics
+        label = create_label_LDA(tol, solver, shrinkage, store_covariance, n_components, covariance_estimator)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
+        string_results_for_queue = convert_metrics_to_csv(',', label, tol, solver, shrinkage, n_components,
+                                                          store_covariance, covariance_estimator,
+                                                          precision, recall, f1, roc_auc)
+        q_metrics.put(string_results_for_queue)
+    except Exception as err:
+        print("ERROr: " + str(err))
+    except RuntimeWarning as warn:
+        pass
+
+
 def run_algorithm_lda_configuration(metrics, label, X, y, tol=1e-4,
                                     solver='svd', shrinkage=None, store_covariance=False,
                                     n_components=None, covariance_estimator=None,
                                     stratify=False, train_size=0.8
                                     ):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
     try:
         # Creating the classifier object
         classifier = LinearDiscriminantAnalysis(tol=tol, solver=solver, shrinkage=shrinkage,
@@ -110,12 +141,11 @@ def run_algorithm_lda_configuration(metrics, label, X, y, tol=1e-4,
         metrics['f1_score'].append(f1)
         metrics['roc_auc'].append(roc_auc)
     except Exception as err:
-        print("ERROr: "+str(err))
+        print("ERROr: " + str(err))
         print(label)
     except RuntimeWarning as warn:
-        print("Warnnnn"+str(warn))
+        print("Warnnnn" + str(warn))
         print(label)
-
 
 
 def init_metrics_for_LDA():
@@ -123,6 +153,64 @@ def init_metrics_for_LDA():
             'store_covariance': [], 'covariance_estimator': [],
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
+
+
+def run_algorithm_lda_parallel(filename='', path='', stratify=False, train_size=0.8,
+                               normalize_data=False, scaler='min-max', no_threads=8):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_LDA()
+    my_filename = os.path.join(path, 'results/qlda', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_LDA, header=True)
+
+    tol_list = list(chain(np.random.uniform(low=1e-7, high=0.02, size=(1000,))))
+    solver_list = ['lsqr', 'svd', 'eigen']
+    shrinkage_list = list(chain(['auto', None], [0.5, 0.3, 0.4, 0.51, 0.52, 0.53, 0.54, 0.55, 0.56,
+                                                 0.57, 0.58, 59, 0.6, 0.4, 0.41, 0.42, 0.43, 0.44,
+                                                 0.45, 0.46, 0.47, 0.48, 0.49, 0.2, 0.21, 0.22, 0.23, 0.24,
+                                                 0.25, 0.26, 0.27, 0.28, 0.29, 0.31, 0.32, 0.33, 0.34, 0.35,
+                                                 0.36, 0.37, 0.38, 0.39]))
+    store_covariance_list = [True, False]
+    n_components_list = [0, 1, 2, None]
+    store_precision_list = [True, False]
+    assume_centered_list = [True, False]
+
+    # 5280000 configs
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(no_threads) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for tol in tol_list:
+                for solver in solver_list:
+                    for shrinkage in shrinkage_list:
+                        for store_covariance in store_covariance_list:
+                            for n_components in n_components_list:
+                                job = pool.apply_async(run_algorithm_lda_configuration_parallel,
+                                                       (X, y, q_metrics, tol, solver, shrinkage, store_covariance,
+                                                        n_components, None, stratify, train_size))
+                                # print(job)
+                                jobs.append(job)
+                                for store_precision in store_precision_list:
+                                    for assume_centered in assume_centered_list:
+                                        job = pool.apply_async(run_algorithm_lda_configuration_parallel,
+                                                               (X, y, q_metrics, tol, solver, shrinkage, store_covariance,
+                                                                n_components,
+                                                                EmpiricalCovariance(assume_centered=assume_centered,
+                                                                                    store_precision=store_precision),
+                                                                stratify, train_size))
+                                        # print(job)
+                                        jobs.append(job)
+
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()
 
 
 def run_algorithm_lda(filename='', path='', stratify=False, train_size=0.8,
@@ -440,12 +528,12 @@ def run_best_configs_lda(df_configs, filename='', path='', stratify=True, train_
         elif (row['shrinkage'] == 'auto'):
             shrinkage = 'auto'
         else:
-            shrinkage =float(row['shrinkage'])
+            shrinkage = float(row['shrinkage'])
 
         if (row['n_components'] == None or row['n_components'] == 'None' or str(row['n_components']) == 'nan'):
             n_components = None
         else:
-            n_components  =int(row['n_components'])
+            n_components = int(row['n_components'])
 
         if (row['covariance_estimator'] == "EmpiricalCovariance(store_precision=True, assume_centered=False)"):
             covariance_estimator = EmpiricalCovariance(store_precision=True, assume_centered=False)

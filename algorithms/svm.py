@@ -18,9 +18,10 @@ warnings.filterwarnings('ignore', 'Solver terminated early *')
 # warnings.filterwarnings("error")
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
-    os.environ["PYTHONWARNINGS"] = "ignore" # Also affect subprocesses
+    os.environ["PYTHONWARNINGS"] = "ignore"  # Also affect subprocesses
 
 from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
+
 
 @ignore_warnings(category=ConvergenceWarning)
 def run_algorithm_SVC_linear_kernel_configuration_parallel(X, y, q_metrics,
@@ -28,7 +29,7 @@ def run_algorithm_SVC_linear_kernel_configuration_parallel(X, y, q_metrics,
                                                            class_weight='balanced', max_iter=1000,
                                                            decision_function_shape='ovr',
                                                            stratify=False, train_size=0.8):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
     with warnings.catch_warnings():
         try:
             # Creating the classifier object
@@ -44,7 +45,7 @@ def run_algorithm_SVC_linear_kernel_configuration_parallel(X, y, q_metrics,
 
             # Compute metrics
             label = 'SVM with linear kernel'
-            precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities,label, classifier)
+            precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
             string_results_for_queue = convert_metrics_to_csv(',', label, decision_function_shape, cache_size, tol, C,
                                                               shrinking, class_weight, max_iter,
                                                               precision, recall, f1, roc_auc)
@@ -67,7 +68,7 @@ def run_algorithm_SVC_linear_kernel_configuration(metrics, label, X, y,
                                                   max_iter=1000,
                                                   decision_function_shape='ovr',
                                                   stratify=False, train_size=0.8):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
     try:
         # Creating the classifier object
         classifier = SVC(probability=True, kernel='linear', tol=tol, shrinking=shrinking, cache_size=cache_size,
@@ -113,7 +114,7 @@ def init_metrics_for_SVM_with_linear_kernel():
 
 
 def run_algorithm_SVC_linear_kernel_parallel(filename='', path='', stratify=False, train_size=0.8,
-                                             normalize_data=False, scaler='min-max', no_threads = 8):
+                                             normalize_data=False, scaler='min-max', no_threads=8):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_SVM_with_linear_kernel()
     my_filename = os.path.join(path, 'results/svc', filename)
@@ -123,7 +124,7 @@ def run_algorithm_SVC_linear_kernel_parallel(filename='', path='', stratify=Fals
     shrinking_list = [True, False]
     C_list = list(chain([1, 1.4, 1.5, 1.6, 1.7, 1.8, 4], np.random.uniform(low=1.0, high=4.5, size=(10,))))
     tol_list = list(chain([1e-8, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, ], np.random.uniform(low=1e-2, high=1e-9, size=(10,))))
-    cache_size_list = list(chain([190, 200, 210], [440, 450, 460], [640, 650, 660],[690, 700, 710]))
+    cache_size_list = list(chain([190, 200, 210], [440, 450, 460], [640, 650, 660], [690, 700, 710]))
     # 182784
 
     # count = len(max_iter_list) * len(i_list) * len(j_list) * len(k_list) * len(n_iter_no_change_list) * \
@@ -253,13 +254,14 @@ def run_algorithm_SVC_linear_kernel(filename='', path='', stratify=False, train_
 
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_SVM_with_linear_kernel)
 
+
 @ignore_warnings(category=ConvergenceWarning)
 def run_algorithm_SVC_RBF_kernel_configuration_parallel(X, y, q_metrics, tol=1e-4, C=1.0, shrinking=True,
                                                         cache_size=200,
                                                         class_weight='balanced', max_iter=1000, gamma='scale',
                                                         stratify=False,
                                                         train_size=0.8):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
     with warnings.catch_warnings():
         try:
             # Creating the classifier object
@@ -272,7 +274,8 @@ def run_algorithm_SVC_RBF_kernel_configuration_parallel(X, y, q_metrics, tol=1e-
             label = 'SVM with RBF kernel'
             # Compute metrics
             precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
-            queue_results_to_csv = convert_metrics_to_csv(',', label, gamma, cache_size, tol, C, shrinking, class_weight,
+            queue_results_to_csv = convert_metrics_to_csv(',', label, gamma, cache_size, tol, C, shrinking,
+                                                          class_weight,
                                                           max_iter, precision, recall, f1, roc_auc)
             q_metrics.put(queue_results_to_csv)
         except Exception as err:
@@ -293,7 +296,7 @@ def run_algorithm_SVC_RBF_kernel_configuration(metrics, label, X, y,
                                                gamma='scale',
                                                stratify=False, train_size=0.8
                                                ):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
     try:
         # Creating the classifier object
         classifier = SVC(probability=True, kernel='rbf', tol=tol, shrinking=shrinking, cache_size=cache_size,
@@ -338,16 +341,16 @@ def init_metrics_for_SVM_with_RBF_kernel():
 
 
 def run_algorithm_SVC_RBF_kernel_parallel(filename='', path='', stratify=False, train_size=0.8,
-                                          normalize_data=False, scaler='min-max', no_threads = 8):
+                                          normalize_data=False, scaler='min-max', no_threads=8):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_SVM_with_RBF_kernel()
     my_filename = os.path.join(path, 'results/svc', filename)
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_SVM_with_RBF_kernel, header=True)
     max_iter_list = list(chain([290, 300, 310], [790, 800, 810], [890, 900, 910],
-                              [990, 1000, 1010, 1020, 1030], [1290, 1300, 1310], [1490, 1500, 1510]))
+                               [990, 1000, 1010, 1020, 1030], [1290, 1300, 1310], [1490, 1500, 1510]))
     shrinking_list = [True, False]
     gamma_list = list(chain(['scale'], [0.890, 0.892, 0.894, 0.896, 0.898, 0.9, 0.902,
-                                        0.904,0.906, 0.908, 0.92, 0.94,
+                                        0.904, 0.906, 0.908, 0.92, 0.94,
                                         0.96, 0.98]))
     C_list = list(chain(range(5, 45, 5), np.random.uniform(low=1.0, high=2.5, size=(10,))))
     cache_size_list = list(chain([180, 190, 200, 210, 220, 230, 240, 250], [440, 450, 460]))
@@ -478,6 +481,80 @@ def run_algorithm_SVC_RBF_kernel(filename='', path='', stratify=False, train_siz
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_SVM_with_RBF_kernel)
 
 
+def run_algorithm_SVC_sigmoid_kernel_parallel(filename='', path='', stratify=False, train_size=0.8,
+                                              normalize_data=False, scaler='min-max', no_threads=8):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_SVM_with_sigmoid_kernel()
+    my_filename = os.path.join(path, 'results/svc', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_SVM_with_sigmoid_kernel, header=True)
+    shrinking_list = [True, False]
+    cache_size_list = list(chain(range(195, 205, 1)))
+    coef0_list = list(chain([0.0], range(1, 15, 1), np.random.uniform(low=0.001, high=1.0, size=(20,))))
+    gamma_list = list(chain(['scale'], np.random.uniform(low=0.001, high=0.3, size=(50,))))
+
+    # 35700 configs
+
+    # count = len(max_iter_list) * len(i_list) * len(j_list) * len(k_list) * len(n_iter_no_change_list) * \
+    #         len(epsilon_list) * len(learning_rate_init_list) * len(solver_list) * len(activation_list)
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(no_threads) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for shrinking in shrinking_list:
+                for coef0 in coef0_list:
+                    for gamma in gamma_list:
+                        for cache_size in cache_size_list:
+                            job = pool.apply_async(run_algorithm_SVC_sigmoid_kernel_configuration_parallel,
+                                                   (X, y, q_metrics,
+                                                    1e-4, 1.0, shrinking, cache_size, 'balanced', 1000, gamma, coef0,
+                                                    stratify, train_size))
+                            # print(job)
+                            jobs.append(job)
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def run_algorithm_SVC_sigmoid_kernel_configuration_parallel(X, y, q_metrics, tol=1e-4, C=1.0, shrinking=True,
+                                                            cache_size=200, class_weight='balanced', max_iter=1000,
+                                                            gamma='scale', coef0=0.0, stratify=False, train_size=0.8):
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
+    with warnings.catch_warnings():
+        try:
+            # Creating the classifier object
+            classifier = SVC(probability=True, kernel='sigmoid', tol=tol, shrinking=shrinking, cache_size=cache_size,
+                             C=C, class_weight=class_weight, max_iter=max_iter, gamma=gamma, coef0=coef0)
+            # Performing training
+            classifier.fit(X_train, y_train)
+            # Make predictions
+            y_pred, y_pred_probabilities = prediction(X_test, classifier)
+            label = 'SVM with sigmoid kernel' + create_label_SVM(kernel='sigmoid', tol=tol, C=C, shrinking=shrinking,
+                                                                 cache_size=cache_size, class_weight=class_weight,
+                                                                 max_iter=max_iter, decision_function_shape=None,
+                                                                 gamma=gamma,
+                                                                 degree=None, coef0=coef0)
+            # Compute metrics
+            precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
+            queue_results_to_csv = convert_metrics_to_csv(',', label, gamma, cache_size, coef0, tol, C, shrinking,
+                                                          class_weight, max_iter, precision, recall, f1, roc_auc)
+            q_metrics.put(queue_results_to_csv)
+        except Exception as err:
+            print("error" + str(err))
+            # pass
+        # except RuntimeWarning as warn:
+        #     print("Warn" + str(warn))
+        #     # pass
+
+
 def run_algorithm_SVC_sigmoid_kernel_configuration(metrics, label, X, y,
                                                    tol=1e-4,
                                                    C=1.0,
@@ -489,7 +566,7 @@ def run_algorithm_SVC_sigmoid_kernel_configuration(metrics, label, X, y,
                                                    coef0=0.0,
                                                    stratify=False, train_size=0.8
                                                    ):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     # Creating the classifier object
     classifier = SVC(probability=True, kernel='sigmoid', tol=tol, shrinking=shrinking, cache_size=cache_size,
@@ -656,6 +733,37 @@ def init_metrics_for_SVM_with_polynomial_kernel():
             }
 
 
+@ignore_warnings(category=ConvergenceWarning)
+def run_algorithm_SVC_poly_kernel_configuration_parallel(X, y, q_metrics, tol=1e-4, C=1.0, shrinking=True,
+                                                         cache_size=200, class_weight='balanced', max_iter=1000,
+                                                         gamma='scale', degree=3, coef0=0.0, stratify=False,
+                                                         train_size=0.8):
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
+    with warnings.catch_warnings():
+        try:
+            # Creating the classifier object
+            classifier = SVC(probability=True, kernel='poly', tol=tol, shrinking=shrinking, cache_size=cache_size,
+                             C=C, class_weight=class_weight, max_iter=max_iter, degree=degree, gamma=gamma, coef0=coef0)
+            # Performing training
+            classifier.fit(X_train, y_train)
+            # Make predictions
+            y_pred, y_pred_probabilities = prediction(X_test, classifier)
+            label = create_label_SVM(kernel='poly', tol=tol, C=C, shrinking=shrinking, cache_size=cache_size,
+                                     class_weight=class_weight, max_iter=max_iter, decision_function_shape=None,
+                                     gamma=gamma, degree=degree, coef0=coef0)
+            # Compute metrics
+            precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
+            queue_results_to_csv = convert_metrics_to_csv(',', label, gamma, cache_size, coef0, degree, tol, C, shrinking,
+                                                          class_weight, max_iter, precision, recall, f1, roc_auc)
+            q_metrics.put(queue_results_to_csv)
+        except Exception as err:
+            print("error" + str(err))
+            # pass
+        # except RuntimeWarning as warn:
+        #     print("Warn" + str(warn))
+        #     # pass
+
+
 def run_algorithm_SVC_poly_kernel_configuration(metrics, label, X, y,
                                                 tol=1e-4,
                                                 C=1.0,
@@ -668,7 +776,7 @@ def run_algorithm_SVC_poly_kernel_configuration(metrics, label, X, y,
                                                 coef0=0.0,
                                                 stratify=False, train_size=0.8
                                                 ):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     # Creating the classifier object
     classifier = SVC(probability=True, kernel='poly', tol=tol, shrinking=shrinking, cache_size=cache_size,
@@ -706,6 +814,53 @@ def run_algorithm_SVC_poly_kernel_configuration(metrics, label, X, y,
     except RuntimeWarning as warn:
         print(warn)
         # pass
+
+
+def run_algorithm_SVC_poly_kernel_parallel(filename='', path='', stratify=False, train_size=0.8,
+                                           normalize_data=False, scaler='min-max', no_threads=8):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_SVM_with_polynomial_kernel()
+    my_filename = os.path.join(path, 'results/svc', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_SVM_with_polynomial_kernel, header=True)
+
+    shrinking_list = [True, False]
+    degree_list = list(chain(range(1, 20, 1)))
+    cache_size_list = list(chain(range(195, 205, 1)))
+    coef0_list = list(chain(np.random.uniform(low=2, high=15, size=(20,)),
+                            range(15, 45, 1), range(95, 105), range(145, 155),
+                            range(170, 180), range(195, 205), range(295, 305)))
+    gamma_list = list(chain(np.random.uniform(low=0.001, high=1.0, size=(20,))))
+
+    # 760000 configs
+
+    # count = len(max_iter_list) * len(i_list) * len(j_list) * len(k_list) * len(n_iter_no_change_list) * \
+    #         len(epsilon_list) * len(learning_rate_init_list) * len(solver_list) * len(activation_list)
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(no_threads) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for shrinking in shrinking_list:
+                for coef0 in coef0_list:
+                    for gamma in gamma_list:
+                        for cache_size in cache_size_list:
+                            for degree in degree_list:
+                                job = pool.apply_async(run_algorithm_SVC_poly_kernel_configuration_parallel,
+                                                       (X, y, q_metrics,
+                                                        1e-4, 1.0, shrinking, cache_size, 'balanced', 1000, gamma,
+                                                        degree, coef0, stratify, train_size))
+                                # print(job)
+                                jobs.append(job)
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()
 
 
 def run_algorithm_SVC_poly_kernel(filename='', path='', stratify=False, train_size=0.8,
@@ -828,14 +983,14 @@ def run_algorithm_SVC_poly_kernel(filename='', path='', stratify=False, train_si
 
 
 def run_best_configs_SVM_linear(df_configs, filename='', path='', stratify=True, train_size=0.8,
-                        normalize_data=True, scaler='min-max', n_rep=100):
+                                normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_SVM_with_linear_kernel()
     my_filename = os.path.join(path, 'new_results/svm', filename)
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():
-            label = create_label_SVM(kernel = 'linear', tol = row['tol'], C=row['C'], shrinking = row['shrinking'],
+            label = create_label_SVM(kernel='linear', tol=row['tol'], C=row['C'], shrinking=row['shrinking'],
                                      cache_size=row['cache_size'],
                                      class_weight=row['class_weight'], max_iter=row['max_iter'],
                                      decision_function_shape=row['decision_function_shape'])
@@ -847,9 +1002,9 @@ def run_best_configs_SVM_linear(df_configs, filename='', path='', stratify=True,
                                                           class_weight=row['class_weight'],
                                                           max_iter=int(row['max_iter']),
                                                           decision_function_shape=row['decision_function_shape'],
-                                           stratify=stratify, train_size=train_size
-                                           )
-            label = create_label_SVM(kernel = 'linear', tol = row['tol'], C=row['C'], shrinking = row['shrinking'],
+                                                          stratify=stratify, train_size=train_size
+                                                          )
+            label = create_label_SVM(kernel='linear', tol=row['tol'], C=row['C'], shrinking=row['shrinking'],
                                      cache_size=row['cache_size'],
                                      class_weight=row['class_weight'], max_iter=-1,
                                      decision_function_shape=row['decision_function_shape'])
@@ -878,6 +1033,7 @@ def run_best_configs_SVM_linear(df_configs, filename='', path='', stratify=True,
     metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_SVM_with_linear_kernel, header=True)
 
+
 def run_best_configs_SVM_RBF(df_configs, filename='', path='', stratify=True, train_size=0.8,
                              normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
@@ -886,27 +1042,26 @@ def run_best_configs_SVM_RBF(df_configs, filename='', path='', stratify=True, tr
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():
-            label = create_label_SVM(kernel = 'rbf', tol=row['tol'], C=row['C'],shrinking= row['shrinking'],
+            label = create_label_SVM(kernel='rbf', tol=row['tol'], C=row['C'], shrinking=row['shrinking'],
                                      cache_size=row['cache_size'],
                                      class_weight=row['class_weight'],
                                      max_iter=row['max_iter'],
-                                     gamma = row['gamma']
+                                     gamma=row['gamma']
                                      )
             if (row['gamma'] == 'scale'):
-                gamma= 'scale'
+                gamma = 'scale'
             else:
                 gamma = float(row['gamma'])
             run_algorithm_SVC_RBF_kernel_configuration(metrics, label, X, y,
-                                                        tol=float(row['tol']),
-                                                        C=float(row['C']),
-                                                        shrinking=bool(row['shrinking']),
-                                                        cache_size=int(row['cache_size']),
-                                                        class_weight=row['class_weight'],
-                                                        max_iter=int(row['max_iter']),
-                                                        gamma=gamma,
-                                                        stratify=stratify, train_size=train_size
-                                                        )
-
+                                                       tol=float(row['tol']),
+                                                       C=float(row['C']),
+                                                       shrinking=bool(row['shrinking']),
+                                                       cache_size=int(row['cache_size']),
+                                                       class_weight=row['class_weight'],
+                                                       max_iter=int(row['max_iter']),
+                                                       gamma=gamma,
+                                                       stratify=stratify, train_size=train_size
+                                                       )
 
     metrics_df = pd.DataFrame(metrics)
     metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
@@ -923,39 +1078,38 @@ def run_best_configs_SVM_RBF(df_configs, filename='', path='', stratify=True, tr
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_SVM_with_RBF_kernel, header=True)
 
 
-
 def run_best_configs_SVM_poly(df_configs, filename='', path='', stratify=True, train_size=0.8,
-                                normalize_data=True, scaler='min-max', n_rep=100):
+                              normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_SVM_with_polynomial_kernel()
     my_filename = os.path.join(path, 'new_results/svc', filename)
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():
-            label = create_label_SVM(kernel = 'poly', tol=row['tol'], C=row['C'],shrinking= row['shrinking'],
+            label = create_label_SVM(kernel='poly', tol=row['tol'], C=row['C'], shrinking=row['shrinking'],
                                      cache_size=row['cache_size'],
                                      class_weight=row['class_weight'],
                                      max_iter=row['max_iter'],
-                                     gamma = row['gamma'],
-                                     degree = row['degree'],
-                                     coef0 = row['coef0'],
+                                     gamma=row['gamma'],
+                                     degree=row['degree'],
+                                     coef0=row['coef0'],
                                      )
             if (row['gamma'] == 'scale'):
-                gamma= 'scale'
+                gamma = 'scale'
             else:
                 gamma = float(row['gamma'])
             run_algorithm_SVC_poly_kernel_configuration(metrics, label, X, y,
-                                                          tol=float(row['tol']),
-                                                          C=float(row['C']),
-                                                          shrinking=bool(row['shrinking']),
-                                                          cache_size=int(row['cache_size']),
-                                                          class_weight=row['class_weight'],
-                                                          max_iter=int(row['max_iter']),
-                                                          gamma=gamma,
-                                                          degree=int(row['degree']),
-                                                          coef0=float(row['coef0']),
-                                                          stratify=stratify, train_size=train_size
-                                                          )
+                                                        tol=float(row['tol']),
+                                                        C=float(row['C']),
+                                                        shrinking=bool(row['shrinking']),
+                                                        cache_size=int(row['cache_size']),
+                                                        class_weight=row['class_weight'],
+                                                        max_iter=int(row['max_iter']),
+                                                        gamma=gamma,
+                                                        degree=int(row['degree']),
+                                                        coef0=float(row['coef0']),
+                                                        stratify=stratify, train_size=train_size
+                                                        )
             # label = create_label_SVM(kernel = 'poly', tol=row['tol'], C=row['C'],shrinking= row['shrinking'],
             #              cache_size=row['cache_size'],
             #              class_weight=row['class_weight'],
@@ -977,7 +1131,6 @@ def run_best_configs_SVM_poly(df_configs, filename='', path='', stratify=True, t
             #                                             stratify=stratify, train_size=train_size
             #                                             )
 
-
     metrics_df = pd.DataFrame(metrics)
     metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
                                                                     'f1_score': 'mean', 'roc_auc': 'mean',
@@ -996,34 +1149,34 @@ def run_best_configs_SVM_poly(df_configs, filename='', path='', stratify=True, t
 
 
 def run_best_configs_SVM_sigmoid(df_configs, filename='', path='', stratify=True, train_size=0.8,
-                              normalize_data=True, scaler='min-max', n_rep=100):
+                                 normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_SVM_with_sigmoid_kernel()
     my_filename = os.path.join(path, 'new_results/svc', filename)
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():
-            label = create_label_SVM(kernel = 'sigmoid', tol=row['tol'], C=row['C'],shrinking= row['shrinking'],
+            label = create_label_SVM(kernel='sigmoid', tol=row['tol'], C=row['C'], shrinking=row['shrinking'],
                                      cache_size=row['cache_size'],
                                      class_weight=row['class_weight'],
                                      max_iter=row['max_iter'],
-                                     gamma = row['gamma'],
-                                     coef0 = row['coef0'])
+                                     gamma=row['gamma'],
+                                     coef0=row['coef0'])
             if (row['gamma'] == 'scale'):
-                gamma= 'scale'
+                gamma = 'scale'
             else:
                 gamma = float(row['gamma'])
             run_algorithm_SVC_sigmoid_kernel_configuration(metrics, label, X, y,
-                                                        tol=float(row['tol']),
-                                                        C=float(row['C']),
-                                                        shrinking=bool(row['shrinking']),
-                                                        cache_size=int(row['cache_size']),
-                                                        class_weight=row['class_weight'],
-                                                        max_iter=int(row['max_iter']),
-                                                        gamma=gamma,
-                                                        coef0=float(row['coef0']),
-                                                        stratify=stratify, train_size=train_size
-                                                        )
+                                                           tol=float(row['tol']),
+                                                           C=float(row['C']),
+                                                           shrinking=bool(row['shrinking']),
+                                                           cache_size=int(row['cache_size']),
+                                                           class_weight=row['class_weight'],
+                                                           max_iter=int(row['max_iter']),
+                                                           gamma=gamma,
+                                                           coef0=float(row['coef0']),
+                                                           stratify=stratify, train_size=train_size
+                                                           )
 
     metrics_df = pd.DataFrame(metrics)
     metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
@@ -1041,7 +1194,6 @@ def run_best_configs_SVM_sigmoid(df_configs, filename='', path='', stratify=True
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_SVM_with_sigmoid_kernel, header=True)
 
 
-
 def create_label_SVM(kernel, tol,
                      C,
                      shrinking,
@@ -1052,24 +1204,24 @@ def create_label_SVM(kernel, tol,
     label = ''
     if (kernel == 'linear'):
         label = "SVM, kernel=" + str(
-        kernel) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
-        shrinking) + ", cache_size=" + str(
-        cache_size) + ", class_weight=" + class_weight + ', max_iter=' + str(
-        max_iter) + ', decision_function_shape=' + decision_function_shape
+            kernel) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
+            shrinking) + ", cache_size=" + str(
+            cache_size) + ", class_weight=" + class_weight + ', max_iter=' + str(
+            max_iter) + ', decision_function_shape=' + decision_function_shape
     elif (kernel == 'poly'):
         label = "SVM, kernel=" + str(
             kernel) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
             shrinking) + ", cache_size=" + str(
             cache_size) + ", class_weight=" + class_weight + ', max_iter=' + str(
-            max_iter) + ', gamma=' + str(gamma) + ", degree="+str(degree) + ", coef0="+str(coef0)
+            max_iter) + ', gamma=' + str(gamma) + ", degree=" + str(degree) + ", coef0=" + str(coef0)
     elif (kernel == 'sigmoid'):
         label = "SVM, kernel=" + str(
             kernel) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
             shrinking) + ", cache_size=" + str(
             cache_size) + ", class_weight=" + class_weight + ', max_iter=' + str(
-            max_iter) + ', gamma=' + str(gamma) + ", coef0="+str(coef0)
-    elif (kernel=='rbf'):
-        label = "SVM, kernel="+str(kernel)+ ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
+            max_iter) + ', gamma=' + str(gamma) + ", coef0=" + str(coef0)
+    elif (kernel == 'rbf'):
+        label = "SVM, kernel=" + str(kernel) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
             shrinking) + ", cache_size=" + str(
             cache_size) + ", class_weight=" + class_weight + ', max_iter=' + str(
             max_iter) + ', gamma=' + str(gamma)

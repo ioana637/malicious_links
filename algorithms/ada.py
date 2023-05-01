@@ -1,6 +1,7 @@
 import os
 from itertools import chain
 import warnings
+from multiprocessing import Manager, Pool
 
 import pandas as pd
 from sklearn.ensemble import AdaBoostClassifier
@@ -12,7 +13,8 @@ warnings.filterwarnings("error")
 
 import numpy as np
 
-from utils import split_data, prediction, cal_metrics, appendMetricsTOCSV
+from utils import split_data, prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, \
+    listener_write_to_file
 
 
 def run_algorithm_ada_boost_configuration(metrics, label, X, y,
@@ -21,7 +23,7 @@ def run_algorithm_ada_boost_configuration(metrics, label, X, y,
                                           learning_rate=1.0,
                                           algorithm='SAMME.R',
                                           stratify=False, train_size=0.8):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     try:
         # Creating the classifier object
@@ -60,6 +62,48 @@ def init_metrics_for_AdaBoost():
             'learning_rate': [], 'algorithm': [],
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
+
+
+def create_label_for_ADA(base_estimator, n_estimators, learning_rate, algorithm):
+    return 'ADA, base_estimator=' + str(base_estimator) + ', n_estimators=' + str(
+        n_estimators) + ", learning_rate=" + str(learning_rate) + ", algorithm=" + str(algorithm)
+
+
+def run_algorithm_ada_parallel(filename='', path='', stratify=False, train_size=0.8,
+                               normalize_data=False, scaler='min-max', no_threads=8):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_AdaBoost()
+    my_filename = os.path.join(path, 'results/ada', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_AdaBoost, header=True)
+
+    algorithm_list = ['SAMME', 'SAMME.R']
+    learning_rate_list = list(chain(np.random.uniform(low=0.7, high=1.2, size=(20,))))
+    n_estimators_list = list(chain(range(31, 160, 1), range(175, 195, 1), range(340, 360, 1), range(645, 655, 1)))
+    # 7160 configs
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(no_threads) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for algorithm in algorithm_list:
+                for learning_rate in learning_rate_list:
+                    for n_estimators in n_estimators_list:
+                        job = pool.apply_async(run_algorithm_ada_boost_configuration_parallel,
+                                               (X, y, q_metrics, None, n_estimators, learning_rate, algorithm,
+                                                stratify, train_size))
+                        # print(job)
+                        jobs.append(job)
+
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()
 
 
 def run_algorithm_ada_boost(filename='', path='', stratify=False, train_size=0.8,
@@ -148,7 +192,7 @@ def run_algorithm_ada_boost(filename='', path='', stratify=False, train_size=0.8
 
 
 def run_best_configs_ada(df_configs, filename='', path='', stratify=True, train_size=0.8,
-                     normalize_data=True, scaler='min-max', n_rep=100):
+                         normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_AdaBoost()
     my_filename = os.path.join(path, 'new_results/ada', filename)
@@ -175,3 +219,34 @@ def run_best_configs_ada(df_configs, filename='', path='', stratify=True, train_
     metrics_df = compute_average_metric(metrics_df)
     metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_AdaBoost, header=True)
+
+
+def run_algorithm_ada_boost_configuration_parallel(X, y, q_metrics, base_estimator=None, n_estimators=50,
+                                                   learning_rate=1.0, algorithm='SAMME.R',
+                                                   stratify=False, train_size=0.8):
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
+    try:
+        # Creating the classifier object
+        classifier = AdaBoostClassifier(base_estimator=base_estimator, n_estimators=n_estimators,
+                                        learning_rate=learning_rate, algorithm=algorithm)
+        # Performing training
+        classifier.fit(X_train, y_train)
+
+        # Make predictions
+        y_pred, y_pred_probabilities = prediction(X_test, classifier)
+
+        # Compute metrics
+        label = create_label_for_ADA(base_estimator=base_estimator, n_estimators=n_estimators,
+                                     learning_rate=learning_rate, algorithm=algorithm)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
+        string_results_for_queue = convert_metrics_to_csv(',', label, base_estimator, n_estimators, learning_rate,
+                                                          algorithm, precision, recall, f1, roc_auc)
+        q_metrics.put(string_results_for_queue)
+    except Exception as er:
+        # pass
+        print(er)
+        # traceback.print_exc()
+        # print(traceback.format_exc())
+    except RuntimeWarning as warn:
+        # pass
+        print(warn)

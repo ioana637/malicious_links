@@ -1,4 +1,5 @@
 import os
+from multiprocessing import Manager, Pool
 from random import randint
 
 import numpy as np
@@ -9,11 +10,12 @@ from sklearn.tree import DecisionTreeClassifier
 
 from data_post import compute_average_metric
 from data_pre import load_normalized_dataset, split_data_in_testing_training
-from utils import split_data, cal_metrics, prediction, appendMetricsTOCSV
+from utils import split_data, cal_metrics, prediction, appendMetricsTOCSV, convert_metrics_to_csv, \
+    listener_write_to_file
 import time
 import matplotlib.pyplot as plt
 from itertools import chain
-from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_score, cross_validate
+from sklearn.model_selection import RepeatedStratifiedKFold, cross_validate
 
 
 def run_top_20_DT_configs(filename='', path='', stratify=True, train_size=0.8,
@@ -298,7 +300,7 @@ def run_algorithm_dt_configuration_feature_importance(criterion='gini',
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     feature_names = X.columns
     print(feature_names)
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     # Creating the classifier object
     classifier = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, min_samples_leaf=min_samples_leaf,
@@ -341,6 +343,58 @@ def run_algorithm_dt_configuration_feature_importance(criterion='gini',
     plt.show()
 
 
+def create_label_for_DT(criterion, splitter, max_depth, min_samples_leaf, min_samples_split, min_weight_fraction_leaf,
+                        max_features, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha):
+    return "DT, criterion=" + str(criterion) + ", splitter=" + str(splitter) + ", max_depth=" + str(
+        max_depth) + ", min_samples_leaf=" + str(min_samples_leaf) + ", min_samples_split=" + str(
+        min_samples_split) + ", min_weight_fraction_leaf=" + str(min_weight_fraction_leaf) + ", max_features=" + str(
+        max_features) + ", max_leaf_nodes=" + str(max_leaf_nodes) + ", min_impurity_decrease=" + str(
+        min_impurity_decrease) + ", class_weight=" + str(class_weight) + ", ccp_alpha=" + str(ccp_alpha)
+
+
+def run_algorithm_dt_configuration_parallel(X, y, q_metrics,
+                                            criterion='gini', splitter='best', max_depth=12, min_samples_leaf=32,
+                                            min_samples_split=2, min_weight_fraction_leaf=0.0, max_features=None,
+                                            max_leaf_nodes=None, min_impurity_decrease=0.0, class_weight='balanced',
+                                            ccp_alpha=0.0, stratify=False, train_size=0.8):
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
+    try:
+        # Creating the classifier object
+        classifier = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, min_samples_leaf=min_samples_leaf,
+                                            splitter=splitter, min_samples_split=min_samples_split,
+                                            min_weight_fraction_leaf=min_weight_fraction_leaf,
+                                            max_features=max_features, max_leaf_nodes=max_leaf_nodes,
+                                            min_impurity_decrease=min_impurity_decrease,
+                                            class_weight=class_weight, ccp_alpha=ccp_alpha
+                                            )
+        # Performing training
+        classifier.fit(X_train, y_train)
+
+        # Make predictions
+        y_pred, y_pred_probabilities = prediction(X_test, classifier)
+
+        # Compute metrics
+        label = create_label_for_DT(criterion='gini', splitter='best', max_depth=12, min_samples_leaf=32,
+                                    min_samples_split=2, min_weight_fraction_leaf=0.0, max_features=None,
+                                    max_leaf_nodes=None, min_impurity_decrease=0.0, class_weight='balanced',
+                                    ccp_alpha=0.0)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
+        string_results_for_queue = convert_metrics_to_csv(',', label,
+                                                          criterion, splitter, max_depth, min_samples_leaf,
+                                                          min_samples_split, min_weight_fraction_leaf, max_features,
+                                                          max_leaf_nodes, min_impurity_decrease, class_weight,
+                                                          ccp_alpha, precision, recall, f1, roc_auc)
+        q_metrics.put(string_results_for_queue)
+    except Exception as er:
+        # pass
+        print(er)
+        # traceback.print_exc()
+        # print(traceback.format_exc())
+    except RuntimeWarning as warn:
+        # pass
+        print(warn)
+
+
 def run_algorithm_dt_configuration(metrics, label, X, y, criterion='gini',
                                    splitter='best', max_depth=12, min_samples_leaf=32,
                                    min_samples_split=2, min_weight_fraction_leaf=0.0,
@@ -348,7 +402,7 @@ def run_algorithm_dt_configuration(metrics, label, X, y, criterion='gini',
                                    class_weight='balanced', ccp_alpha=0.0,
                                    train_size=0.8, stratify=False
                                    ):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     # Creating the classifier object
     classifier = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, min_samples_leaf=min_samples_leaf,
@@ -394,6 +448,52 @@ def init_metrics_for_DT():
             'ccp_alpha': [],
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
+
+
+def run_algorithm_dt_parallel(filename='', path='', stratify=False, train_size=0.8,
+                               normalize_data=False, scaler='min-max', no_threads=8):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_DT()
+    my_filename = os.path.join(path, 'results/dt', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_DT, header=True)
+
+    criterion_list = ['gini', 'entropy']
+    max_depth_list = list(range(5, 16))
+    min_samples_leaf_list = list(chain(range(1, 21), range(30, 36)))
+    min_samples_split_list = list(range(2, 11))
+    max_features_list = [None, 'sqrt']
+    max_leaf_nodes_list = list(range(18, 26))
+    # 82368
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(no_threads) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for criterion in criterion_list:
+                for max_depth in max_depth_list:
+                    for min_samples_leaf in min_samples_leaf_list:
+                        for min_samples_split in min_samples_split_list:
+                            for max_features in max_features_list:
+                                for max_leaf_nodes in max_leaf_nodes_list:
+                                    job = pool.apply_async(run_algorithm_dt_configuration_parallel,
+                                                           (X, y, q_metrics,
+                                                            criterion, 'best', max_depth, min_samples_leaf,
+                                                            min_samples_split, 0.0, max_features, max_leaf_nodes, 0.0,
+                                                            'balanced', 0.0,
+                                                            stratify, train_size))
+                                    # print(job)
+                                    jobs.append(job)
+
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()
 
 
 def run_algorithm_dt(filename='', path='', stratify=False, train_size=0.8,
@@ -612,7 +712,6 @@ def run_algorithm_dt_configuration_with_k_fold(X, y, criterion='gini',
 
 def run_algorithm_dt_with_k_fold(filename='', path='', stratify=False, train_size=0.8,
                                  normalize_data=False, scaler='min-max'):
-
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_DT()
 
@@ -625,4 +724,3 @@ def run_algorithm_dt_with_k_fold(filename='', path='', stratify=False, train_siz
     run_algorithm_dt_configuration_with_k_fold(X, y, criterion='entropy', min_samples_leaf=1, max_depth=8,
                                                max_leaf_nodes=20, min_samples_split=7, max_features=None,
                                                class_weight='balanced', n_splits=2, n_repeats=10)
-

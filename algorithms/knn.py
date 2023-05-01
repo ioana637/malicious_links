@@ -1,4 +1,5 @@
 import os
+from multiprocessing import Manager, Pool
 from random import randint
 
 import pandas as pd
@@ -7,7 +8,8 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from data_post import compute_average_metric
 from data_pre import load_normalized_dataset, split_data_in_testing_training
-from utils import prediction, split_data, cal_metrics, appendMetricsTOCSV
+from utils import prediction, split_data, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, \
+    listener_write_to_file
 
 import numpy as np
 from itertools import chain
@@ -202,7 +204,7 @@ def run_algorithm_KNN_configuration(metrics, label, X, y,
                                     n_neighbors=5, weights='uniform', algorithm='auto',
                                     leaf_size=30, p=2, metric='minkowski', metric_params=None,
                                     stratify=False, train_size=0.8):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
     # Creating the classifier object
     classifier = KNeighborsClassifier(n_neighbors=n_neighbors, weights=weights, algorithm=algorithm,
                                       n_jobs=-1, leaf_size=leaf_size, p=p, metric=metric,
@@ -254,6 +256,88 @@ def init_metrics_for_KNN():
             'p': [], 'metric': [], 'metric_params': [],
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
+
+
+def create_label_for_KNN(n_neighbors, weights, algorithm, leaf_size, p, metric, metric_params):
+    return "KNN, n_neighbors=" + str(n_neighbors) + ", weights=" + str(weights) + ", algorithm=" + str(
+        algorithm) + ", leaf_size=" + str(leaf_size) + ", p=" + str(p) + ", metric=" + str(
+        metric) + ", metric_params=" + str(metric_params)
+
+
+def run_algorithm_knn_configuration_parallel(X, y, q_metrics,
+                                             n_neighbors=5, weights='uniform', algorithm='auto',
+                                             leaf_size=30, p=2, metric='minkowski', metric_params=None,
+                                             stratify=False, train_size=0.8
+                                             ):
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
+    try:
+        # Creating the classifier object
+        classifier = KNeighborsClassifier(n_neighbors=n_neighbors, weights=weights, algorithm=algorithm,
+                                          n_jobs=None, leaf_size=leaf_size, p=p, metric=metric,
+                                          metric_params=metric_params)
+        # Performing training
+        classifier.fit(X_train, y_train)
+
+        # Make predictions
+        y_pred, y_pred_probabilities = prediction(X_test, classifier)
+
+        # Compute metrics
+        label = create_label_for_KNN(n_neighbors, weights, algorithm, leaf_size, p, metric, metric_params)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
+        string_results_for_queue = convert_metrics_to_csv(',', label, n_neighbors, weights, algorithm, leaf_size, p,
+                                                          metric, metric_params,
+                                                          precision, recall, f1, roc_auc)
+        q_metrics.put(string_results_for_queue)
+    except Exception as er:
+        # pass
+        print(er)
+        # traceback.print_exc()
+        # print(traceback.format_exc())
+    except RuntimeWarning as warn:
+        # pass
+        print(warn)
+
+
+def run_algorithm_KNN_parallel(filename='', path='', stratify=False, train_size=0.8,
+                               normalize_data=False, scaler='min-max', no_threads=8):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_KNN()
+    my_filename = os.path.join(path, 'results/knn', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_KNN, header=True)
+
+    algorithm_list = ['ball_tree', 'kd_tree', 'auto']
+    metric_list = ['manhattan', 'euclidean', 'minkowski']
+    p_list = list(range(1, 11))
+    n_neighbors_list = list(range(1, 11))
+    leaf_size_list = list(chain(range(1, 15), range(20, 35), range(43, 47), range(50, 57), range(65, 70), range(85, 92)))
+    # 46800
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(no_threads) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for algorithm in algorithm_list:
+                for metric in metric_list:
+                    for p in p_list:
+                        for n_neighbors in n_neighbors_list:
+                            for leaf_size in leaf_size_list:
+                                job = pool.apply_async(run_algorithm_knn_configuration_parallel,
+                                               (X, y, q_metrics,
+                                                n_neighbors, 'distance', algorithm, leaf_size, p, metric, None,
+                                                stratify, train_size))
+                                # print(job)
+                                jobs.append(job)
+
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()
 
 
 def run_algorithm_KNN(filename='', path='', stratify=False, train_size=0.8,
@@ -401,6 +485,7 @@ def run_algorithm_KNN(filename='', path='', stratify=False, train_size=0.8,
 def run_algorithm_KNN_with_k_fold(normalize_data=False, scaler='min-max'):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
 
-    run_algorithm_KNN_configuration_with_k_fold(X, y, weights='distance', metric='euclidean', p=5, algorithm='ball_tree',
+    run_algorithm_KNN_configuration_with_k_fold(X, y, weights='distance', metric='euclidean', p=5,
+                                                algorithm='ball_tree',
                                                 n_neighbors=3, leaf_size=86,
                                                 n_splits=2, n_repeats=10)

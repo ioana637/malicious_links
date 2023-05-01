@@ -52,7 +52,7 @@ def run_algorithm_MLP_configuration(metrics, label, X, y,
                                     validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
                                     epsilon=1e-8, n_iter_no_change=10, max_fun=15000,
                                     train_size=0.8, stratify=False):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     try:
         # Creating the classifier object
@@ -201,7 +201,7 @@ def run_algorithm_MLP_configuration_parallel(X, y, q_metrics,
                                              validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
                                              epsilon=1e-8, n_iter_no_change=10, max_fun=15000,
                                              train_size=0.8, stratify=False):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     try:
         # Creating the classifier object

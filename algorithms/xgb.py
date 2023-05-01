@@ -35,7 +35,7 @@ def run_algorithm_gradient_boost_configuration_parallel(X, y, q_metrics,
                                                         tol=1e-4,
                                                         ccp_alpha=0.0,
                                                         stratify=False, train_size=0.8):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
     try:
         # Creating the classifier object
         classifier = GradientBoostingClassifier(loss=loss, learning_rate=learning_rate,
@@ -115,7 +115,7 @@ def run_algorithm_gradient_boost_configuration(metrics, label, X, y,
                                                tol=1e-4,
                                                ccp_alpha=0.0,
                                                stratify=False, train_size=0.8):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
     try:
         # Creating the classifier object
         classifier = GradientBoostingClassifier(loss=loss, learning_rate=learning_rate,

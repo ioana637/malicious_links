@@ -1,5 +1,6 @@
 import os
 from itertools import chain
+from multiprocessing import Manager, Pool
 
 import numpy as np
 import pandas as pd
@@ -7,13 +8,43 @@ from sklearn.naive_bayes import GaussianNB, BernoulliNB
 
 from data_post import compute_average_metric
 from data_pre import split_data_in_testing_training, load_normalized_dataset
-from utils import prediction, cal_metrics, appendMetricsTOCSV
+from utils import prediction, cal_metrics, appendMetricsTOCSV, listener_write_to_file, convert_metrics_to_csv
 
+
+
+def run_algorithm_gnb_configuration_parallel(X, y, q_metrics,
+                                             var_smoothing=1e-9,
+                                             stratify=False, train_size=0.8
+                                             ):
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
+    try:
+        # Creating the classifier object
+        classifier = GaussianNB(var_smoothing=var_smoothing)
+        # Performing training
+        classifier.fit(X_train, y_train)
+
+        # Make predictions
+        y_pred, y_pred_probabilities = prediction(X_test, classifier)
+
+        # Compute metrics
+        label = create_label_GNB(var_smoothing)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
+        string_results_for_queue = convert_metrics_to_csv(',', label, var_smoothing,
+                                                          precision, recall, f1, roc_auc)
+        q_metrics.put(string_results_for_queue)
+    except Exception as er:
+        # pass
+        print(er)
+        # traceback.print_exc()
+        # print(traceback.format_exc())
+    except RuntimeWarning as warn:
+        # pass
+        print(warn)
 
 def run_algorithm_gnb_configuration(metrics, label, X, y,
                                     var_smoothing=1e-9,
                                     stratify=False, train_size=0.8):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
     try:
         # Creating the classifier object
         classifier = GaussianNB(var_smoothing=var_smoothing)
@@ -47,6 +78,39 @@ def init_metrics_for_GNB():
             'var_smoothing': [],
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
+
+
+def run_algorithm_gnb_parallel(filename='', path='', stratify=False, train_size=0.8,
+                               normalize_data=False, scaler='min-max', no_threads=8):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_GNB()
+    my_filename = os.path.join(path, 'results/nb', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_GNB, header=True)
+
+    var_smoothing_list = list(chain(np.random.uniform(low=1e-10, high=1e-9, size=(100,)),
+                                    np.random.uniform(low=1e-9, high=1e-8, size=(100,))))
+    # 200
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(no_threads) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for var_smoothing in var_smoothing_list:
+                job = pool.apply_async(run_algorithm_gnb_configuration_parallel,
+                                       (X, y, q_metrics, var_smoothing, stratify, train_size))
+                # print(job)
+                jobs.append(job)
+
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()
 
 
 def run_algorithm_gnb(filename='', path='', stratify=False, train_size=0.8,
@@ -86,6 +150,44 @@ def init_metrics_for_BNB():
             'alpha': [], 'fit_prior': [], 'binarize': [],
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
+
+
+def run_algorithm_bnb_parallel(filename='', path='', stratify=False, train_size=0.8,
+                              normalize_data=False, scaler='min-max', no_threads=8):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_BNB()
+    my_filename = os.path.join(path, 'results/nb', filename)
+    metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_BNB, header=True)
+
+    alpha_list = list(np.random.uniform(low=0.0, high=2.5, size=(200,)))
+    binarize_list = list(np.random.uniform(low=0.1, high=1.5, size=(100,)))
+    fit_prior_list= [True, False]
+    # 40000
+
+    with Manager() as manager:
+        q_metrics = manager.Queue()
+        jobs = []
+
+        with Pool(no_threads) as pool:
+            watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
+            for alpha in alpha_list:
+                for binarize in binarize_list:
+                    for fit_prior in fit_prior_list:
+                        job = pool.apply_async(run_algorithm_bnb_configuration_parallel,
+                                                   (X, y, q_metrics,
+                                                    alpha, binarize, fit_prior,
+                                                    stratify, train_size))
+                        # print(job)
+                        jobs.append(job)
+
+            # print(jobs)
+            # collect results from the workers through the pool result queue
+            for job in jobs:
+                job.get()
+            # now we are done, kill the listener
+            q_metrics.put('kill')
+            pool.close()
+            pool.join()
 
 
 def run_algorithm_bnb(filename='', path='', stratify=False, train_size=0.8,
@@ -134,10 +236,39 @@ def run_algorithm_bnb(filename='', path='', stratify=False, train_size=0.8,
         metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_BNB)
 
 
+def run_algorithm_bnb_configuration_parallel(X, y, q_metrics,
+                                             alpha=1.0, binarize=0.0, fit_prior=True,
+                                            stratify=False, train_size=0.8
+                                            ):
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
+    try:
+        # Creating the classifier object
+        classifier = BernoulliNB(alpha=alpha, fit_prior=fit_prior, binarize=binarize)
+        # Performing training
+        classifier.fit(X_train, y_train)
+
+        # Make predictions
+        y_pred, y_pred_probabilities = prediction(X_test, classifier)
+
+        # Compute metrics
+        label = create_label_BNB(alpha=alpha, fit_prior=fit_prior, binarize=binarize)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
+        string_results_for_queue = convert_metrics_to_csv(',', label, alpha, fit_prior, binarize,
+                                                          precision, recall, f1, roc_auc)
+        q_metrics.put(string_results_for_queue)
+    except Exception as er:
+        # pass
+        print(er)
+        # traceback.print_exc()
+        # print(traceback.format_exc())
+    except RuntimeWarning as warn:
+        # pass
+        print(warn)
+
 def run_algorithm_bnb_configuration(metrics, label, X, y,
                                     alpha=1.0, binarize=0.0, fit_prior=True,
                                     stratify=False, train_size=0.8):
-    X_test, X_train, y_test, y_train = split_data_in_testing_training(X, y, stratify, train_size)
+    X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
 
     try:
         # Creating the classifier object
