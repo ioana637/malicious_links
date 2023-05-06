@@ -100,6 +100,46 @@ def prediction(X_test, clf_object):
     # print(y_pred_probabilities)
     return y_pred, y_pred_probabilities
 
+# Function to calculate accuracy
+def cal_metrics_general(y_test, y_pred, y_pred_probabilities):
+    # print("\n-----------------------------------------------")
+    # print("METRICS FOR "+ label)
+    # print("-----------------------------------------------\n")
+
+    # print("Confusion Matrix: ",
+    #     confusion_matrix(y_test, y_pred))
+
+    precision = precision_score(y_test, y_pred, pos_label=1) * 100
+    # print ("Precision : ", precision)
+
+    recall = recall_score(y_test, y_pred) * 100
+    # print ("Recall : ", recall)
+
+    f1 = f1_score(y_test, y_pred, pos_label=1, labels=np.unique(y_pred)) * 100
+    # print ("F1 score : ",f1)
+
+    roc_auc = 0.0
+    if (len(y_pred_probabilities) > 0):
+        try:
+            param_y_pred_probabilities = list(map(lambda x: x[1], y_pred_probabilities))
+            roc_auc = roc_auc_score(y_test, param_y_pred_probabilities, average='weighted', labels=np.unique(y_pred))
+            # print ("ROC_AUC score: ", roc_auc)
+        except Exception as err:
+            print(err)
+
+    # fpr - false positive rate, tpr - true positive rate, thresholds values based on which the class 0 or 1 is chosen
+    # fpr, tpr, thresholds = roc_curve(y_test, y_pred_probabilities[:,1])
+    # plt.plot(fpr, tpr, marker = '.', label = "AUROC = %0.3f" %roc_auc)
+    # plt.title("ROC curve")
+    # plt.xlabel('False Positives Rate')
+    # plt.ylabel('True POsitives Rate')
+    # plt.legend()
+    # plt.show()
+
+    # print("Report : ",
+    # classification_report(y_test, y_pred))
+
+    return precision, recall, f1, roc_auc
 
 # Function to calculate accuracy
 def cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier):

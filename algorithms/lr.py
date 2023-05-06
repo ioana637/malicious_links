@@ -10,6 +10,16 @@ from data_pre import split_data_in_testing_training, load_normalized_dataset
 from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
 
 
+def create_LR_classifier(row):
+    classifier = LogisticRegression(penalty=row['penalty'], dual=bool(row['dual']), tol=float(row['tol']),
+                                    C=float(row['C']), fit_intercept=bool(row['dual']),
+                                    intercept_scaling=int(row['intercept_scaling']),
+                                    class_weight=row['class_weight'], random_state=None,
+                                    solver=row['solver'],
+                                    max_iter=int(row['max_iter']), multi_class=row['multi_class'],
+                                    l1_ratio=None)
+    return classifier
+
 def run_algorithm_lr_configuration_parallel(X, y, q_metrics,
                                             penalty='l2', dual=False, tol=1e-4,
                                             C=1.0, fit_intercept=True, intercept_scaling=1,
@@ -375,6 +385,10 @@ def run_best_configs_lr(df_configs, filename='', path='', stratify=True, train_s
     metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_LR, header=True)
 
+def create_label_LR_for_row(row):
+    return create_label_LR(row['penalty'], row['dual'], row['tol'], row['C'], row['fit_intercept'],
+                           row['intercept_scaling'], row['class_weight'], row['random_state'], row['solver'],
+                           row['max_iter'], row['multi_class'], row['l1_ratio'])
 
 def create_label_LR(penalty, dual, tol, C, fit_intercept, intercept_scaling, class_weight, random_state, solver,
                     max_iter, multi_class, l1_ratio):

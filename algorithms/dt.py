@@ -18,6 +18,37 @@ from itertools import chain
 from sklearn.model_selection import RepeatedStratifiedKFold, cross_validate
 
 
+def create_DT_classifier(row):
+    # TODO refactor
+    if (row['max_depth'] == 'None' or row['max_depth'] == None or str(row['max_depth']) == 'nan'):
+        max_depth = None
+    else:
+        max_depth = int(row['max_depth'])
+
+    if (row['max_leaf_nodes'] == 'None' or row['max_leaf_nodes'] == None or str(row['max_leaf_nodes']) == 'nan'):
+        max_leaf_nodes = None
+    else:
+        max_leaf_nodes = int(row['max_leaf_nodes'])
+
+    if (row['max_features'] == 'None' or row['max_features'] == None or str(row['max_features']) == 'nan'):
+        max_features = None
+    elif (row['max_features'] == 'auto' or row['max_features'] == 'sqrt' or row['max_features'] == 'log2'):
+        max_features = row['max_features']
+    else:
+        max_features = float(row['max_features'])
+
+    classifier = DecisionTreeClassifier(criterion=row['criterion'], max_depth=max_depth,
+                                        min_samples_leaf=float(row['min_samples_leaf']),
+                                        splitter=row['splitter'],
+                                        min_samples_split=float(row['min_samples_split']),
+                                        min_weight_fraction_leaf=float(row['min_weight_fraction_leaf']),
+                                        max_features=max_features,
+                                        max_leaf_nodes=max_leaf_nodes,
+                                        min_impurity_decrease=float(row['min_impurity_decrease']),
+                                        ccp_alpha=float(row['ccp_alpha']), class_weight='balanced')
+    return classifier
+
+
 def run_top_20_DT_configs(filename='', path='', stratify=True, train_size=0.8,
                           normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
@@ -342,6 +373,12 @@ def run_algorithm_dt_configuration_feature_importance(criterion='gini',
     fig.tight_layout()
     plt.show()
 
+
+def create_label_for_DT_for_row(row_dt):
+    return create_label_for_DT(row_dt['criterion'], row_dt['splitter'], row_dt['max_depth'],
+                        row_dt['min_samples_leaf'], row_dt['min_samples_split'], row_dt['min_weight_fraction_leaf'],
+                        row_dt['max_features'], row_dt['max_leaf_nodes'], row_dt['min_impurity_decrease'], 'balanced',
+                        row_dt['ccp_alpha'])
 
 def create_label_for_DT(criterion, splitter, max_depth, min_samples_leaf, min_samples_split, min_weight_fraction_leaf,
                         max_features, max_leaf_nodes, min_impurity_decrease, class_weight, ccp_alpha):

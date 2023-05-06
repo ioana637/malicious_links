@@ -11,6 +11,7 @@ import warnings
 from sklearn.svm._libsvm_sparse import ConvergenceWarning
 from sklearn.utils._testing import ignore_warnings
 
+from algorithms.enums import SVM_Kernels
 from data_post import compute_average_metric
 from data_pre import split_data_in_testing_training, load_normalized_dataset
 
@@ -21,6 +22,61 @@ if not sys.warnoptions:
     os.environ["PYTHONWARNINGS"] = "ignore"  # Also affect subprocesses
 
 from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
+
+
+
+# TODO refactor these 4 functions
+def create_SVM_rbf_classifier(row):
+    if (row['gamma'] == 'scale'):
+        gamma = 'scale'
+    else:
+        gamma = float(row['gamma'])
+
+    classifier = SVC(probability=True, kernel='rbf', tol=float(row['tol']), C=float(row['C']),
+                     shrinking=bool(row['shrinking']), cache_size=int(row['cache_size']),
+                     class_weight=row['class_weight'], max_iter=int(row['max_iter']), gamma=gamma)
+    return classifier
+
+
+def create_SVM_poly_classifier(row):
+    if (row['gamma'] == 'scale'):
+        gamma = 'scale'
+    else:
+        gamma = float(row['gamma'])
+    classifier = SVC(probability=True, kernel='poly', tol=float(row['tol']),
+                     C=float(row['C']),
+                     shrinking=bool(row['shrinking']),
+                     cache_size=int(row['cache_size']),
+                     class_weight=row['class_weight'],
+                     max_iter=int(row['max_iter']),
+                     gamma=gamma,
+                     degree=int(row['degree']),
+                     coef0=float(row['coef0']))
+    return classifier
+
+
+def create_SVM_linear_classifier(row):
+    classifier = SVC(probability=True, kernel='linear', tol=float(row['tol']),
+                     C=float(row['C']),
+                     shrinking=bool(row['shrinking']),
+                     cache_size=int(row['cache_size']),
+                     class_weight=row['class_weight'],
+                     max_iter=int(row['max_iter']),
+                     decision_function_shape=row['decision_function_shape'], )
+    return classifier
+
+
+def create_SVM_sigmoid_classifier(row):
+    if (row['gamma'] == 'scale'):
+        gamma = 'scale'
+    else:
+        gamma = float(row['gamma'])
+    classifier = SVC(probability=True, kernel='sigmoid', tol=float(row['tol']), C=float(row['C']),
+                     shrinking=bool(row['shrinking']), cache_size=int(row['cache_size']),
+                     class_weight=row['class_weight'], max_iter=int(row['max_iter']),
+                     gamma=gamma, coef0=float(row['coef0']))
+    return classifier
+
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -1194,6 +1250,22 @@ def run_best_configs_SVM_sigmoid(df_configs, filename='', path='', stratify=True
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_SVM_with_sigmoid_kernel, header=True)
 
 
+def create_label_SVM_for_row(kernel: SVM_Kernels, row):
+    if (kernel == SVM_Kernels.linear):
+        return create_label_SVM(kernel, row['tol'], row['C'], row['shrinking'], row['cache_size'],
+                                row['class_weight'], row['max_iter'], row['decision_function_shape'])
+    elif (kernel == SVM_Kernels.rbf):
+        return create_label_SVM(kernel, row['tol'], row['C'], row['shrinking'], row['cache_size'],
+                                row['class_weight'], row['max_iter'], row['gamma'])
+    elif (kernel == SVM_Kernels.sigmoid):
+        return create_label_SVM(kernel, row['tol'], row['C'], row['shrinking'], row['cache_size'],
+                                row['class_weight'], row['max_iter'], row['gamma'], row['coef0'])
+    elif (kernel == SVM_Kernels.poly):
+        return create_label_SVM(kernel, row['tol'], row['C'], row['shrinking'], row['cache_size'],
+                                row['class_weight'], row['max_iter'], row['gamma'], row['degree'],
+                                row['coef0'])
+
+
 def create_label_SVM(kernel, tol,
                      C,
                      shrinking,
@@ -1202,26 +1274,26 @@ def create_label_SVM(kernel, tol,
                      max_iter,
                      decision_function_shape=None, gamma=None, degree=None, coef0=None):
     label = ''
-    if (kernel == 'linear'):
+    if (kernel == SVM_Kernels.linear):
         label = "SVM, kernel=" + str(
-            kernel) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
+            kernel.value) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
             shrinking) + ", cache_size=" + str(
             cache_size) + ", class_weight=" + class_weight + ', max_iter=' + str(
-            max_iter) + ', decision_function_shape=' + decision_function_shape
-    elif (kernel == 'poly'):
+            max_iter) + ', decision_function_shape=' + str(decision_function_shape)
+    elif (kernel == SVM_Kernels.poly):
         label = "SVM, kernel=" + str(
-            kernel) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
+            kernel.value) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
             shrinking) + ", cache_size=" + str(
             cache_size) + ", class_weight=" + class_weight + ', max_iter=' + str(
             max_iter) + ', gamma=' + str(gamma) + ", degree=" + str(degree) + ", coef0=" + str(coef0)
-    elif (kernel == 'sigmoid'):
+    elif (kernel == SVM_Kernels.sigmoid):
         label = "SVM, kernel=" + str(
-            kernel) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
+            kernel.value) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
             shrinking) + ", cache_size=" + str(
             cache_size) + ", class_weight=" + class_weight + ', max_iter=' + str(
             max_iter) + ', gamma=' + str(gamma) + ", coef0=" + str(coef0)
-    elif (kernel == 'rbf'):
-        label = "SVM, kernel=" + str(kernel) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
+    elif (kernel == SVM_Kernels.rbf):
+        label = "SVM, kernel=" + str(kernel.value) + ", tol=" + str(tol) + ", C=" + str(C) + ", shrinking=" + str(
             shrinking) + ", cache_size=" + str(
             cache_size) + ", class_weight=" + class_weight + ', max_iter=' + str(
             max_iter) + ', gamma=' + str(gamma)

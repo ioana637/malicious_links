@@ -33,7 +33,7 @@ def run_algorithm_gaussian_process_configuration_parallel(X, y, q_metrics,
         # Creating the classifier object
         classifier = GaussianProcessClassifier(kernel=kernel, copy_X_train=copy_X_train,
                                                multi_class=multi_class, max_iter_predict=max_iter_predict,
-                                               n_restarts_optimizer=n_restarts_optimizer, n_jobs=-1
+                                               n_restarts_optimizer=n_restarts_optimizer, n_jobs=None
                                                )
         # Performing training
         classifier.fit(X_train, y_train)
@@ -282,16 +282,16 @@ def run_algorithm_gpc_parallel(filename='', path='', stratify=False, train_size=
     my_filename = os.path.join(path, 'results/gpc', filename)
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_GPC, header=True)
 
-    max_iter_predict_list = list(chain(range(30, 150, 4), range(795, 805, 2)))
-    n_restarts_optimizer_list = list(chain(range(0, 26, 3), [90, 100, 110], [190, 200, 210],
+    max_iter_predict_list = list(chain(range(30, 150, 10), [790, 800, 810]))
+    n_restarts_optimizer_list = list(chain(range(0, 26, 4), [90, 100, 110], [190, 200, 210],
                                            [360, 370, 380, 390], [440, 450, 460, 470, 480, 490]))
     copy_X_train_list = [True, False]
     multiclass_list = ['one_vs_rest', 'one_vs_one']
-    sigma_0_list = list(chain([0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.5, 1, 1.5],
+    sigma_0_list = list(chain([0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 1.5],
                               range(2, 15, 4), range(15, 30, 5), range(30, 60, 10), range(60, 150, 20),
                               range(150, 400, 50), range(400, 1000, 200), range(1000, 5000, 500),
                               range(5000, 10000, 1000), range(10000, 90000, 5000)))
-    # 213500
+    # 84180
 
     with Manager() as manager:
         q_metrics = manager.Queue()

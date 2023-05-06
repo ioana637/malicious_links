@@ -131,4 +131,5 @@ dmypy.json
 # Ignore result files and dataset files
 results
 new_results
+new_results_1
 data

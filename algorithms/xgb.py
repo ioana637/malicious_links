@@ -16,6 +16,55 @@ warnings.filterwarnings("error")
 from utils import prediction, cal_metrics, appendMetricsTOCSV, listener_write_to_file, convert_metrics_to_csv
 
 
+# TODO refactor function and reuse preprocess params
+def create_XGB_classifier(row):
+    if (float(row['min_samples_split']) < 1.0):
+        min_samples_split = float(row['min_samples_split'])
+    else:
+        min_samples_split = int(row['min_samples_split'])
+
+    if (float(row['min_samples_leaf']) < 1.0):
+        min_samples_leaf = float(row['min_samples_leaf'])
+    else:
+        min_samples_leaf = int(row['min_samples_leaf'])
+
+    if (str(row['init']) == 'nan'):
+        init = None
+    else:
+        init = None
+    if (str(row['max_features']) == 'nan'):
+        max_features = None
+    else:
+        max_features = None
+    if (str(row['n_iter_no_change']) == 'nan'):
+        n_iter_no_change = None
+    else:
+        n_iter_no_change = None
+
+    if (row['max_leaf_nodes'] == 'None' or row['max_leaf_nodes'] == None or str(row['max_leaf_nodes']) == 'nan'):
+        max_leaf_nodes = None
+    else:
+        max_leaf_nodes = int(row['max_leaf_nodes'])
+
+    classifier = GradientBoostingClassifier(tol=float(row['tol']), loss=row['loss'],
+                                            learning_rate=float(row['learning_rate']),
+                                            n_estimators=int(row['n_estimators']),
+                                            subsample=int(row['subsample']),
+                                            criterion=row['criterion'],
+                                            min_samples_split=min_samples_split,
+                                            min_samples_leaf=min_samples_leaf,
+                                            min_weight_fraction_leaf=int(row['min_weight_fraction_leaf']),
+                                            max_depth=int(row['max_depth']),
+                                            min_impurity_decrease=int(row['min_impurity_decrease']),
+                                            init=init, max_features=max_features,
+                                            max_leaf_nodes=max_leaf_nodes,
+                                            validation_fraction=float(row['validation_fraction']),
+                                            n_iter_no_change=n_iter_no_change,
+                                            ccp_alpha=int(row['ccp_alpha'])
+                                            )
+    return classifier
+
+
 def run_algorithm_gradient_boost_configuration_parallel(X, y, q_metrics,
                                                         loss='deviance',
                                                         learning_rate=0.1,
@@ -77,6 +126,21 @@ def run_algorithm_gradient_boost_configuration_parallel(X, y, q_metrics,
         # pass
         print(warn)
 
+
+def create_label_for_XGB_for_row(row):
+    return create_label_for_XGB(loss=row['loss'], learning_rate=row['learning_rate'],
+                                 n_estimators=row['n_estimators'],
+                                 subsample=row['subsample'], criterion=row['criterion'],
+                                 min_samples_split=row['min_samples_split'],
+                                 min_samples_leaf=row['min_samples_leaf'],
+                                 min_weight_fraction_leaf=row['min_weight_fraction_leaf'],
+                                 max_depth=row['max_depth'], min_impurity_decrease=row['min_impurity_decrease'],
+                                 init=row['init'], max_features=row['max_features'],
+                                 max_leaf_nodes=row['max_leaf_nodes'],
+                                 validation_fraction=row['validation_fraction'],
+                                 n_iter_no_change=row['n_iter_no_change'], tol=row['tol'],
+                                 ccp_alpha=row['ccp_alpha']
+                                 )
 
 def create_label_for_XGB(loss, learning_rate, n_estimators, subsample, criterion,
                          min_samples_split, min_samples_leaf, min_weight_fraction_leaf,

@@ -16,6 +16,56 @@ from data_pre import load_normalized_dataset, split_data_in_testing_training
 from utils import split_data, prediction, cal_metrics, appendMetricsTOCSV, listener_write_to_file, \
     convert_metrics_to_csv
 
+# TODO reuse for best configs
+def prepare_RF_params(row):
+    params_dict = {}
+    if (row['max_samples'] == 'None' or row['max_samples'] == None or str(row['max_samples']) == 'nan'):
+        params_dict['max_samples'] = None
+    else:
+        params_dict['max_samples'] = float(row['max_samples'])
+
+    if (row['max_depth'] == 'None' or row['max_depth'] == None or str(row['max_depth']) == 'nan'):
+        params_dict['max_depth'] = None
+    else:
+        params_dict['max_depth'] = int(row['max_depth'])
+
+    if (row['max_leaf_nodes'] == 'None' or row['max_leaf_nodes'] == None or str(row['max_leaf_nodes']) == 'nan'):
+        params_dict['max_leaf_nodes'] = None
+    else:
+        params_dict['max_leaf_nodes'] = int(row['max_leaf_nodes'])
+
+    if (row['max_features'] == 'None' or row['max_features'] == None or str(row['max_features']) == 'nan'):
+        params_dict['max_features'] = None
+    elif (row['max_features'] == 'auto' or row['max_features'] == 'sqrt' or row['max_features'] == 'log2'):
+        params_dict['max_features'] = row['max_features']
+    else:
+        params_dict['max_features'] = float(row['max_features'])
+
+    params_dict['n_estimators'] = int(row['n_estimators'])
+    params_dict['criterion'] = row['criterion']
+    params_dict['min_samples_leaf'] = float(row['min_samples_leaf'])
+    params_dict['min_samples_split'] = float(row['min_samples_split'])
+    params_dict['min_weight_fraction_leaf'] = float(row['min_weight_fraction_leaf'])
+    params_dict['min_impurity_decrease'] = float(row['min_impurity_decrease'])
+    params_dict['bootstrap'] = bool(row['bootstrap'])
+    params_dict['oob_score'] = bool(row['oob_score'])
+    params_dict['ccp_alpha'] = float(row['ccp_alpha'])
+    params_dict['class_weight'] = 'balanced'
+    params_dict['n_jobs'] = -1
+    return params_dict
+
+
+def create_RF_classifier(row):
+    params = prepare_RF_params(row)
+    return RandomForestClassifier(n_estimators=params['n_estimators'], criterion=params['criterion'],
+                                  min_samples_leaf=params['min_samples_leaf'], max_depth=params['max_depth'],
+                                  min_samples_split=params['min_samples_split'], max_features=params['max_features'],
+                                  max_leaf_nodes=params['max_leaf_nodes'], n_jobs=params['n_jobs'],
+                                  min_weight_fraction_leaf=params['min_weight_fraction_leaf'],
+                                  min_impurity_decrease=params['min_impurity_decrease'],
+                                  bootstrap=params['bootstrap'], oob_score=params['oob_score'],
+                                  max_samples=params['max_samples'], ccp_alpha=params['ccp_alpha'],
+                                  class_weight=params['class_weight'])
 
 def run_top_20_RFC_configs(filename='', path='', stratify=False, train_size=0.8,
                            normalize_data=True, scaler='min-max', n_rep=100):
@@ -355,6 +405,13 @@ def run_algorithm_rfc_parallel(filename='', path='', stratify=False, train_size=
             pool.close()
             pool.join()
 
+def create_label_for_rfc_for_row(row_rf):
+    return create_label_for_rfc(row_rf['criterion'], row_rf['n_estimators'],
+                         row_rf['min_samples_leaf'], row_rf['min_samples_split'],
+                         row_rf['max_depth'], row_rf['max_leaf_nodes'], row_rf['max_features'],
+                         row_rf['min_weight_fraction_leaf'], row_rf['min_impurity_decrease'],
+                         row_rf['bootstrap'], row_rf['oob_score'], 'balanced',
+                         row_rf['ccp_alpha'], row_rf['max_samples'])
 
 def create_label_for_rfc(criterion, n_estimators, min_samples_leaf, min_samples_split, max_depth,
                          max_leaf_nodes, max_features, min_weight_fraction_leaf,

@@ -14,6 +14,35 @@ from utils import prediction, split_data, cal_metrics, appendMetricsTOCSV, conve
 import numpy as np
 from itertools import chain
 
+# TODO use for best configs
+def prepare_KNN_params(row):
+    params = {}
+    if (row['weights'] == 'None' or row['weights'] == None or str(row['weights']) == 'nan'):
+        params['weights'] = None
+    else:
+        params['weights'] = row['weights']
+    if (row['metric_params'] == 'None' or row['metric_params'] == None or str(row['metric_params']) == 'nan'):
+        params['metric_params'] = None
+    else:
+        params['metric_params'] = row['metric_params']
+    params['n_neighbors'] = int(row['n_neighbors'])
+    params['algorithm'] = row['algorithm']
+    params['p'] = int(row['p'])
+    params['leaf_size'] = int(row['leaf_size'])
+    params['metric'] = row['metric']
+    params['n_jobs'] = -1
+    return params
+
+
+def create_KNN_classifier(row):
+    params = prepare_KNN_params(row)
+    classifier = KNeighborsClassifier(n_neighbors=params['n_neighbors'], weights=params['weights'],
+                                      algorithm=params['algorithm'], p=params['p'],
+                                      leaf_size=params['leaf_size'], metric=params['metric'],
+                                      metric_params=params['metric_params'], n_jobs=params['n_jobs'])
+    return classifier
+
+
 
 def run_top_20_KNN_configs(filename='', path='', stratify=False, train_size=0.8,
                            normalize_data=True, scaler='min-max', n_rep=100):
@@ -257,6 +286,10 @@ def init_metrics_for_KNN():
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
 
+def create_label_for_KNN_for_row(row_knn):
+    return create_label_for_KNN(row_knn['n_neighbors'], row_knn['weights'], row_knn['algorithm'],
+                                row_knn['leaf_size'], row_knn['p'], row_knn['metric'],
+                                row_knn['metric_params'])
 
 def create_label_for_KNN(n_neighbors, weights, algorithm, leaf_size, p, metric, metric_params):
     return "KNN, n_neighbors=" + str(n_neighbors) + ", weights=" + str(weights) + ", algorithm=" + str(

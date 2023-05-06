@@ -1,6 +1,6 @@
 import os
-from itertools import chain
 import warnings
+from itertools import chain
 from multiprocessing import Manager, Pool
 
 import pandas as pd
@@ -13,8 +13,16 @@ warnings.filterwarnings("error")
 
 import numpy as np
 
-from utils import split_data, prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, \
+from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, \
     listener_write_to_file
+
+
+def create_ADA_classifier(row):
+    classifier = AdaBoostClassifier(base_estimator=None,
+                                    n_estimators=int(row['n_estimators']),
+                                    learning_rate=float(row['learning_rate']),
+                                    algorithm=row['algorithm'])
+    return classifier
 
 
 def run_algorithm_ada_boost_configuration(metrics, label, X, y,
@@ -62,6 +70,10 @@ def init_metrics_for_AdaBoost():
             'learning_rate': [], 'algorithm': [],
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
+
+
+def create_label_for_ADA_from_row(row):
+    return create_label_for_ADA(row['base_estimator'], row['n_estimators'], row['learning_rate'], row['algorithm'])
 
 
 def create_label_for_ADA(base_estimator, n_estimators, learning_rate, algorithm):

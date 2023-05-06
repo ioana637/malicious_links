@@ -15,6 +15,32 @@ warnings.filterwarnings("error")
 from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
 
 
+def create_LDA_classifier(row):
+    # TODO refactor and reuse preprocess params
+    if (row['shrinkage'] == 'None' or row['shrinkage'] == None or str(row['shrinkage']) == 'nan'):
+        shrinkage = None
+    elif (row['shrinkage'] == 'auto'):
+        shrinkage = 'auto'
+    else:
+        shrinkage = float(row['shrinkage'])
+
+    if (row['n_components'] == None or row['n_components'] == 'None' or str(row['n_components']) == 'nan'):
+        n_components = None
+    else:
+        n_components = int(row['n_components'])
+
+    if (row['covariance_estimator'] == "EmpiricalCovariance(store_precision=True, assume_centered=False)"):
+        covariance_estimator = EmpiricalCovariance(store_precision=True, assume_centered=False)
+    elif (row['covariance_estimator'] == "EmpiricalCovariance(store_precision=False, assume_centered=False)"):
+        covariance_estimator = EmpiricalCovariance(store_precision=False, assume_centered=False)
+    else:
+        covariance_estimator = None
+    classifier = LinearDiscriminantAnalysis(tol=float(row['tol']),
+                                            solver=row['solver'], shrinkage=shrinkage,
+                                            store_covariance=bool(row['store_covariance']),
+                                            n_components=n_components, covariance_estimator=covariance_estimator)
+    return classifier
+
 def run_algorithm_qda_configuration(metrics, label, X, y, tol=1e-4,
                                     stratify=False, train_size=0.8):
     X_train, X_test, y_train, y_test = split_data_in_testing_training(X, y, stratify, train_size)
@@ -561,6 +587,11 @@ def run_best_configs_lda(df_configs, filename='', path='', stratify=True, train_
     metrics_df = compute_average_metric(metrics_df)
     metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_LDA, header=True)
+
+
+def create_label_LDA_for_row(row):
+    return create_label_LDA(row['tol'], row['solver'], row['shrinkage'], row['store_covariance'],
+                            row['n_components'], row['covariance_estimator'])
 
 
 def create_label_LDA(tol, solver, shrinkage, store_covariance, n_components, covariance_estimator):

@@ -11,6 +11,15 @@ from data_pre import split_data_in_testing_training, load_normalized_dataset
 from utils import prediction, cal_metrics, appendMetricsTOCSV, listener_write_to_file, convert_metrics_to_csv
 
 
+def create_GNB_classifier(row):
+    classifier = GaussianNB(var_smoothing=float(row['var_smoothing']))
+    return classifier
+
+
+def create_BNB_classifier(row):
+    classifier = BernoulliNB(alpha=float(row['alpha']), binarize=float(row['binarize']),
+                             fit_prior=bool(row['fit_prior']))
+    return classifier
 
 def run_algorithm_gnb_configuration_parallel(X, y, q_metrics,
                                              var_smoothing=1e-9,
@@ -321,6 +330,9 @@ def run_best_configs_gnb(df_configs, filename='', path='', stratify=True, train_
     metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_GNB, header=True)
 
+def create_label_for_GNB_for_row(row):
+    return create_label_GNB(row['var_smoothing'])
+
 def create_label_GNB(var_smoothing):
     label = "Gaussian Naive Bayes, var_smoothing=" + str(var_smoothing)
     return label
@@ -349,6 +361,9 @@ def run_best_configs_bnb(df_configs, filename='', path='', stratify=True, train_
     metrics_df = compute_average_metric(metrics_df)
     metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_BNB, header=True)
+
+def create_label_BNB_for_row(row):
+    return create_label_BNB(row['alpha'], row['binarize'], row['fit_prior'])
 
 def create_label_BNB(alpha,binarize, fit_prior):
     label = "Bernoulli Naive Bayes, alpha=" + str(
