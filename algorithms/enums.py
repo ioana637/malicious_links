@@ -14,6 +14,8 @@ class Algorithms(enum.Enum):
     SVM_sigmoid = 'svm_sigmoid'
     SVM_linear = 'svm_linear'
     SVM_rbf = 'svm_rbf'
+    MLP = 'mlp'
+    GPC = 'gpc'
 
 class SVM_Kernels(enum.Enum):
     poly = 'poly',

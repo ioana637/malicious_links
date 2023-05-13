@@ -44,7 +44,7 @@ def run_algorithm_ada_boost_configuration(metrics, label, X, y,
         y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
         # Compute metrics
-        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
         metrics['label'].append(label)
 
         metrics['base_estimator'].append(base_estimator)
@@ -207,7 +207,7 @@ def run_best_configs_ada(df_configs, filename='', path='', stratify=True, train_
                          normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_AdaBoost()
-    my_filename = os.path.join(path, 'new_results/ada', filename)
+    my_filename = os.path.join(path, 'new_results\\ada', filename)
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():

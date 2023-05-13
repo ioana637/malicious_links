@@ -16,51 +16,67 @@ warnings.filterwarnings("error")
 from utils import prediction, cal_metrics, appendMetricsTOCSV, listener_write_to_file, convert_metrics_to_csv
 
 
-# TODO refactor function and reuse preprocess params
-def create_XGB_classifier(row):
+def prepare_XGB_params(row):
+    params_dict = {}
     if (float(row['min_samples_split']) < 1.0):
-        min_samples_split = float(row['min_samples_split'])
+        params_dict['min_samples_split'] = float(row['min_samples_split'])
     else:
-        min_samples_split = int(row['min_samples_split'])
+        params_dict['min_samples_split'] = int(row['min_samples_split'])
 
     if (float(row['min_samples_leaf']) < 1.0):
-        min_samples_leaf = float(row['min_samples_leaf'])
+        params_dict['min_samples_leaf'] = float(row['min_samples_leaf'])
     else:
-        min_samples_leaf = int(row['min_samples_leaf'])
+        params_dict['min_samples_leaf'] = int(row['min_samples_leaf'])
 
     if (str(row['init']) == 'nan'):
-        init = None
+        params_dict['init'] = None
     else:
-        init = None
+        params_dict['init'] = None
     if (str(row['max_features']) == 'nan'):
-        max_features = None
+        params_dict['max_features'] = None
     else:
-        max_features = None
+        params_dict['max_features'] = None
     if (str(row['n_iter_no_change']) == 'nan'):
-        n_iter_no_change = None
+        params_dict['n_iter_no_change'] = None
     else:
-        n_iter_no_change = None
+        params_dict['n_iter_no_change'] = None
 
     if (row['max_leaf_nodes'] == 'None' or row['max_leaf_nodes'] == None or str(row['max_leaf_nodes']) == 'nan'):
-        max_leaf_nodes = None
+        params_dict['max_leaf_nodes'] = None
     else:
-        max_leaf_nodes = int(row['max_leaf_nodes'])
+        params_dict['max_leaf_nodes'] = int(row['max_leaf_nodes'])
 
-    classifier = GradientBoostingClassifier(tol=float(row['tol']), loss=row['loss'],
-                                            learning_rate=float(row['learning_rate']),
-                                            n_estimators=int(row['n_estimators']),
-                                            subsample=int(row['subsample']),
-                                            criterion=row['criterion'],
-                                            min_samples_split=min_samples_split,
-                                            min_samples_leaf=min_samples_leaf,
-                                            min_weight_fraction_leaf=int(row['min_weight_fraction_leaf']),
-                                            max_depth=int(row['max_depth']),
-                                            min_impurity_decrease=int(row['min_impurity_decrease']),
-                                            init=init, max_features=max_features,
-                                            max_leaf_nodes=max_leaf_nodes,
-                                            validation_fraction=float(row['validation_fraction']),
-                                            n_iter_no_change=n_iter_no_change,
-                                            ccp_alpha=int(row['ccp_alpha'])
+    params_dict['tol']=float(row['tol'])
+    params_dict['loss']=row['loss']
+    params_dict['learning_rate']=float(row['learning_rate'])
+    params_dict['n_estimators']=int(row['n_estimators'])
+    params_dict['subsample']=int(row['subsample'])
+    params_dict['criterion']=row['criterion']
+    params_dict['min_weight_fraction_leaf']=int(row['min_weight_fraction_leaf'])
+    params_dict['max_depth']=int(row['max_depth'])
+    params_dict['min_impurity_decrease']=int(row['min_impurity_decrease'])
+    params_dict['validation_fraction']=float(row['validation_fraction'])
+    params_dict['ccp_alpha']=int(row['ccp_alpha'])
+    return params_dict
+
+
+def create_XGB_classifier(row):
+    params = prepare_XGB_params(row)
+    classifier = GradientBoostingClassifier(tol=params['tol'], loss=params['loss'],
+                                            learning_rate=params['learning_rate'],
+                                            n_estimators=params['n_estimators'],
+                                            subsample=params['subsample'],
+                                            criterion=params['criterion'],
+                                            min_samples_split=params['min_samples_split'],
+                                            min_samples_leaf=params['min_samples_leaf'],
+                                            min_weight_fraction_leaf=params['min_weight_fraction_leaf'],
+                                            max_depth=params['max_depth'],
+                                            min_impurity_decrease=params['min_impurity_decrease'],
+                                            init=params['init'], max_features=params['max_features'],
+                                            max_leaf_nodes=params['max_leaf_nodes'],
+                                            validation_fraction=params['validation_fraction'],
+                                            n_iter_no_change=params['n_iter_no_change'],
+                                            ccp_alpha=params['ccp_alpha']
                                             )
     return classifier
 
@@ -864,64 +880,24 @@ def run_best_configs_xgb(df_configs, filename='', path='', stratify=True, train_
         for index, row in df_configs.iterrows():
             # print('index' + str(index))
             # print(row)
-            label = create_label_for_XGB(loss=row['loss'], learning_rate=row['learning_rate'],
-                                         n_estimators=row['n_estimators'],
-                                         subsample=row['subsample'], criterion=row['criterion'],
-                                         min_samples_split=row['min_samples_split'],
-                                         min_samples_leaf=row['min_samples_leaf'],
-                                         min_weight_fraction_leaf=row['min_weight_fraction_leaf'],
-                                         max_depth=row['max_depth'], min_impurity_decrease=row['min_impurity_decrease'],
-                                         init=row['init'], max_features=row['max_features'],
-                                         max_leaf_nodes=row['max_leaf_nodes'],
-                                         validation_fraction=row['validation_fraction'],
-                                         n_iter_no_change=row['n_iter_no_change'], tol=row['tol'],
-                                         ccp_alpha=row['ccp_alpha']
-                                         )
-
-            if (float(row['min_samples_split']) < 1.0):
-                min_samples_split = float(row['min_samples_split'])
-            else:
-                min_samples_split = int(row['min_samples_split'])
-
-            if (float(row['min_samples_leaf']) < 1.0):
-                min_samples_leaf = float(row['min_samples_leaf'])
-            else:
-                min_samples_leaf = int(row['min_samples_leaf'])
-
-            if (str(row['init']) == 'nan'):
-                init = None
-            else:
-                init = None
-            if (str(row['max_features']) == 'nan'):
-                max_features = None
-            else:
-                max_features = None
-            if (str(row['n_iter_no_change']) == 'nan'):
-                n_iter_no_change = None
-            else:
-                n_iter_no_change = None
-
-            if (row['max_leaf_nodes'] == 'None' or row['max_leaf_nodes'] == None or str(row['max_leaf_nodes']) == 'nan'):
-                max_leaf_nodes = None
-            else:
-                max_leaf_nodes = int(row['max_leaf_nodes'])
-
+            label = create_label_for_XGB_for_row(row)
+            params = prepare_XGB_params(row)
             run_algorithm_gradient_boost_configuration(metrics, label, X, y,
-                                                       tol=float(row['tol']), loss=row['loss'],
-                                                       learning_rate=float(row['learning_rate']),
-                                                       n_estimators=int(row['n_estimators']),
-                                                       subsample=int(row['subsample']),
-                                                       criterion=row['criterion'],
-                                                       min_samples_split=min_samples_split,
-                                                       min_samples_leaf=min_samples_leaf,
-                                                       min_weight_fraction_leaf=int(row['min_weight_fraction_leaf']),
-                                                       max_depth=int(row['max_depth']),
-                                                       min_impurity_decrease=int(row['min_impurity_decrease']),
-                                                       init=init, max_features=max_features,
-                                                       max_leaf_nodes=max_leaf_nodes,
-                                                       validation_fraction=float(row['validation_fraction']),
-                                                       n_iter_no_change=n_iter_no_change,
-                                                       ccp_alpha=int(row['ccp_alpha']),
+                                                       tol=params['tol'], loss=params['loss'],
+                                                       learning_rate=params['learning_rate'],
+                                                       n_estimators=params['n_estimators'],
+                                                       subsample=params['subsample'],
+                                                       criterion=params['criterion'],
+                                                       min_samples_split=params['min_samples_split'],
+                                                       min_samples_leaf=params['min_samples_leaf'],
+                                                       min_weight_fraction_leaf=params['min_weight_fraction_leaf'],
+                                                       max_depth=params['max_depth'],
+                                                       min_impurity_decrease=params['min_impurity_decrease'],
+                                                       init=params['init'], max_features=params['max_features'],
+                                                       max_leaf_nodes=params['max_leaf_nodes'],
+                                                       validation_fraction=params['validation_fraction'],
+                                                       n_iter_no_change=params['n_iter_no_change'],
+                                                       ccp_alpha=params['ccp_alpha'],
                                                        stratify=stratify, train_size=train_size
                                                        )
 

@@ -15,31 +15,41 @@ warnings.filterwarnings("error")
 from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
 
 
-def create_LDA_classifier(row):
-    # TODO refactor and reuse preprocess params
+def prepare_LDA_params(row):
+    params_dict = {}
     if (row['shrinkage'] == 'None' or row['shrinkage'] == None or str(row['shrinkage']) == 'nan'):
-        shrinkage = None
+        params_dict['shrinkage'] = None
     elif (row['shrinkage'] == 'auto'):
-        shrinkage = 'auto'
+        params_dict['shrinkage'] = 'auto'
     else:
-        shrinkage = float(row['shrinkage'])
+        params_dict['shrinkage'] = float(row['shrinkage'])
 
     if (row['n_components'] == None or row['n_components'] == 'None' or str(row['n_components']) == 'nan'):
-        n_components = None
+        params_dict['n_components'] = None
     else:
-        n_components = int(row['n_components'])
+        params_dict['n_components'] = int(row['n_components'])
 
     if (row['covariance_estimator'] == "EmpiricalCovariance(store_precision=True, assume_centered=False)"):
-        covariance_estimator = EmpiricalCovariance(store_precision=True, assume_centered=False)
+        params_dict['covariance_estimator'] = EmpiricalCovariance(store_precision=True, assume_centered=False)
     elif (row['covariance_estimator'] == "EmpiricalCovariance(store_precision=False, assume_centered=False)"):
-        covariance_estimator = EmpiricalCovariance(store_precision=False, assume_centered=False)
+        params_dict['covariance_estimator'] = EmpiricalCovariance(store_precision=False, assume_centered=False)
     else:
-        covariance_estimator = None
-    classifier = LinearDiscriminantAnalysis(tol=float(row['tol']),
-                                            solver=row['solver'], shrinkage=shrinkage,
-                                            store_covariance=bool(row['store_covariance']),
-                                            n_components=n_components, covariance_estimator=covariance_estimator)
+        params_dict['covariance_estimator'] = None
+
+    params_dict['tol'] = float(row['tol'])
+    params_dict['solver'] = row['solver']
+    params_dict['store_covariance'] = bool(row['store_covariance'])
+    return params_dict
+
+
+def create_LDA_classifier(row):
+    params = prepare_LDA_params(row)
+    classifier = LinearDiscriminantAnalysis(tol=params['tol'], solver=params['solver'], shrinkage=params['shrinkage'],
+                                            store_covariance=params['store_covariance'],
+                                            n_components=params['n_components'],
+                                            covariance_estimator=params['covariance_estimator'])
     return classifier
+
 
 def run_algorithm_qda_configuration(metrics, label, X, y, tol=1e-4,
                                     stratify=False, train_size=0.8):
@@ -196,11 +206,11 @@ def run_algorithm_lda_parallel(filename='', path='', stratify=False, train_size=
                                                  0.25, 0.26, 0.27, 0.28, 0.29, 0.31, 0.32, 0.33, 0.34, 0.35,
                                                  0.36, 0.37, 0.38, 0.39]))
     store_covariance_list = [True, False]
-    n_components_list = [0, 1, 2, None]
+    n_components_list = [0, 1, None]
     store_precision_list = [True, False]
     assume_centered_list = [True, False]
 
-    # 5280000 configs
+    # 582000 configs
 
     with Manager() as manager:
         q_metrics = manager.Queue()
@@ -209,23 +219,29 @@ def run_algorithm_lda_parallel(filename='', path='', stratify=False, train_size=
         with Pool(no_threads) as pool:
             watcher = pool.apply_async(listener_write_to_file, (q_metrics, my_filename))
             for tol in tol_list:
-                for solver in solver_list:
-                    for shrinkage in shrinkage_list:
-                        for store_covariance in store_covariance_list:
-                            for n_components in n_components_list:
+                for n_components in n_components_list:
+                    for store_covariance in store_covariance_list:
+                        for solver in solver_list:
+                            if solver == 'svd':
                                 job = pool.apply_async(run_algorithm_lda_configuration_parallel,
-                                                       (X, y, q_metrics, tol, solver, shrinkage, store_covariance,
+                                                       (X, y, q_metrics, tol, solver, None, store_covariance,
                                                         n_components, None, stratify, train_size))
-                                # print(job)
                                 jobs.append(job)
+                            else:
+                                for shrinkage in shrinkage_list:
+                                    job = pool.apply_async(run_algorithm_lda_configuration_parallel,
+                                                           (X, y, q_metrics, tol, solver, shrinkage, store_covariance,
+                                                            n_components, None, stratify, train_size))
+                                    # print(job)
+                                    jobs.append(job)
                                 for store_precision in store_precision_list:
                                     for assume_centered in assume_centered_list:
                                         job = pool.apply_async(run_algorithm_lda_configuration_parallel,
-                                                               (X, y, q_metrics, tol, solver, shrinkage, store_covariance,
-                                                                n_components,
-                                                                EmpiricalCovariance(assume_centered=assume_centered,
-                                                                                    store_precision=store_precision),
-                                                                stratify, train_size))
+                                                           (X, y, q_metrics, tol, solver, None, store_covariance,
+                                                            n_components,
+                                                            EmpiricalCovariance(assume_centered=assume_centered,
+                                                                                store_precision=store_precision),
+                                                            stratify, train_size))
                                         # print(job)
                                         jobs.append(job)
 
@@ -544,34 +560,17 @@ def run_best_configs_lda(df_configs, filename='', path='', stratify=True, train_
                          normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_LDA()
-    my_filename = os.path.join(path, 'new_results/qlda', filename)
+    my_filename = os.path.join(path, 'new_results\\qlda', filename)
 
     for index, row in df_configs.iterrows():
-        label = create_label_LDA(row['tol'], row['solver'], row['shrinkage'], row['store_covariance'],
-                                 row['n_components'], row['covariance_estimator'])
-        if (row['shrinkage'] == 'None' or row['shrinkage'] == None or str(row['shrinkage']) == 'nan'):
-            shrinkage = None
-        elif (row['shrinkage'] == 'auto'):
-            shrinkage = 'auto'
-        else:
-            shrinkage = float(row['shrinkage'])
-
-        if (row['n_components'] == None or row['n_components'] == 'None' or str(row['n_components']) == 'nan'):
-            n_components = None
-        else:
-            n_components = int(row['n_components'])
-
-        if (row['covariance_estimator'] == "EmpiricalCovariance(store_precision=True, assume_centered=False)"):
-            covariance_estimator = EmpiricalCovariance(store_precision=True, assume_centered=False)
-        elif (row['covariance_estimator'] == "EmpiricalCovariance(store_precision=False, assume_centered=False)"):
-            covariance_estimator = EmpiricalCovariance(store_precision=False, assume_centered=False)
-        else:
-            covariance_estimator = None
+        label = create_label_LDA_for_row(row)
+        params = prepare_LDA_params(row)
         for i in range(0, n_rep):
-            run_algorithm_lda_configuration(metrics, label, X, y, tol=float(row['tol']),
-                                            solver=row['solver'], shrinkage=shrinkage,
-                                            store_covariance=bool(row['store_covariance']),
-                                            n_components=n_components, covariance_estimator=covariance_estimator,
+            run_algorithm_lda_configuration(metrics, label, X, y, tol=params['tol'],
+                                            solver=params['solver'], shrinkage=params['shrinkage'],
+                                            store_covariance=params['store_covariance'],
+                                            n_components=params['n_components'],
+                                            covariance_estimator=params['covariance_estimator'],
                                             stratify=stratify, train_size=train_size
                                             )
 

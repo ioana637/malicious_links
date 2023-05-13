@@ -1,8 +1,10 @@
 import os
-from multiprocessing import Pool, Manager, cpu_count
+from multiprocessing import Pool, Manager
 
 import pandas as pd
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.neural_network import MLPClassifier
+from sklearn.utils._testing import ignore_warnings
 
 from data_post import compute_average_metric
 from data_pre import load_normalized_dataset, split_data_in_testing_training
@@ -42,7 +44,7 @@ def run_top_20_MLP_configs(filename='', path='', stratify=False, train_size=0.8,
     metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_MLP, header=True)
 
-
+@ignore_warnings(category=ConvergenceWarning)
 def run_algorithm_MLP_configuration(metrics, label, X, y,
                                     max_iter=100, hidden_layer_sizes=[35, 100, 100],
                                     random_state=123, batch_size=1, activation='relu',
@@ -72,7 +74,7 @@ def run_algorithm_MLP_configuration(metrics, label, X, y,
         y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
         # Compute metrics
-        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
         metrics['label'].append(label)
         metrics['max_iter'].append(max_iter)
         metrics['hidden_layer_sizes'].append(hidden_layer_sizes)
@@ -172,6 +174,14 @@ def run_algorithm_MLP_parallel(filename='', path='', stratify=False, train_size=
             q_metrics.put('kill')
             pool.close()
             pool.join()
+
+
+def create_label_for_MLP_for_row(row):
+    return create_label_for_MLP(row['max_iter'], row['hidden_layer_sizes'], row['random_state'], row['batch_size'],
+                                row['activation'], row['solver'], row['alpha'], row['learning_rate'],
+                                row['learning_rate_init'], row['power_t'], row['shuffle'], row['momentum'],
+                                row['nesterovs_momentum'], row['early_stopping'], row['validation_fraction'],
+                                row['beta_1'], row['beta_2'], row['epsilon'], row['n_iter_no_change'], row['max_fun'])
 
 
 def create_label_for_MLP(max_iter, hidden_layer_sizes, random_state, batch_size, activation, solver, alpha,
@@ -510,6 +520,8 @@ def run_algorithm_MLP(filename='', path='', stratify=False, train_size=0.8,
                             metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_MLP)
 
     metrics = appendMetricsTOCSV(my_filename, metrics, init_metrics_for_MLP)
+
+
 # # export metrics to CSV FILE
 # df_metrics = pd.DataFrame(metrics)
 # df_metrics.to_csv(filename, encoding='utf-8', index= True)
@@ -524,3 +536,113 @@ def run_algorithm_MLP(filename='', path='', stratify=False, train_size=0.8,
 #     nesterovs_momentum) + ', early_stopping=' + str(early_stopping) + ', validation_fraction=' + str(
 #     validation_fraction) + ', beta_1=' + str(beta_1) + 'beta_2=' + str(beta_2) + ', epsilon=' + str(
 # epsilon) + ', n_iter_no_change=' + str(n_iter_no_change) + 'max_fun=' + str(max_fun)+'\"'
+
+
+def prepare_MLP_params(row):
+    params_dict = {}
+    #  hidden_layer_sizes=[35, 100, 100]
+    fields = row['hidden_layer_sizes'].replace('[', '').replace(']', '').split(',')
+    params_dict['hidden_layer_sizes'] = [int(i) for i in fields]
+
+    if row['batch_size'] == 'auto':
+        params_dict['batch_size'] = 'auto'
+    else:
+        params_dict['batch_size'] = int(row['batch_size'])
+
+    if row['shuffle'] == 'TRUE':
+        params_dict['shuffle'] = True
+    else:
+        params_dict['shuffle'] = False
+
+    if row['nesterovs_momentum'] == 'TRUE':
+        params_dict['nesterovs_momentum'] = True
+    else:
+        params_dict['nesterovs_momentum'] = False
+
+    if row['early_stopping'] == 'TRUE':
+        params_dict['early_stopping'] = True
+    else:
+        params_dict['early_stopping'] = False
+
+    params_dict['max_iter'] = int(row['max_iter'])
+    params_dict['random_state'] = int(row['random_state'])
+    params_dict['alpha'] = float(row['alpha'])
+    params_dict['activation'] = row['activation']
+    params_dict['solver'] = row['solver']
+    params_dict['learning_rate'] = row['learning_rate']
+    params_dict['learning_rate_init'] = float(row['learning_rate_init'])
+    params_dict['power_t'] = float(row['power_t'])
+    params_dict['momentum'] = float(row['momentum'])
+    params_dict['validation_fraction'] = float(row['validation_fraction'])
+    params_dict['beta_1'] = float(row['beta_1'])
+    params_dict['beta_2'] = float(row['beta_2'])
+    params_dict['epsilon'] = float(row['epsilon'])
+    params_dict['n_iter_no_change'] = int(row['n_iter_no_change'])
+    params_dict['max_fun'] = int(row['max_fun'])
+
+    return params_dict
+
+
+def run_best_configs_mlp(df_configs, filename='', path='', stratify=True, train_size=0.8,
+                         normalize_data=True, scaler='min-max', n_rep=100):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_MLP()
+    my_filename = os.path.join(path, 'results/mlp', filename)
+
+    for i in range(1, n_rep):
+        for index, row in df_configs.iterrows():
+            # print('index' + str(index))
+            # print(row)
+            label = create_label_for_MLP_for_row(row)
+            params = prepare_MLP_params(row)
+            run_algorithm_MLP_configuration(metrics, label, X, y,
+                                            max_iter=params['max_iter'],
+                                            hidden_layer_sizes=params['hidden_layer_sizes'],
+                                            random_state=params['random_state'], batch_size=params['batch_size'],
+                                            activation=params['activation'], solver=params['solver'],
+                                            alpha=params['alpha'], learning_rate=params['learning_rate'],
+                                            learning_rate_init=params['learning_rate_init'], power_t=params['power_t'],
+                                            shuffle=params['shuffle'], momentum=params['momentum'],
+                                            nesterovs_momentum=params['nesterovs_momentum'],
+                                            early_stopping=params['early_stopping'],
+                                            validation_fraction=params['validation_fraction'], beta_1=params['beta_1'],
+                                            beta_2=params['beta_2'], epsilon=params['epsilon'],
+                                            n_iter_no_change=params['n_iter_no_change'], max_fun=params['max_fun'],
+                                            stratify=stratify, train_size=train_size
+                                            )
+
+    metrics_df = pd.DataFrame(metrics)
+    metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
+                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
+                                                                    'max_iter': 'first', 'hidden_layer_sizes': 'first',
+                                                                    'random_state': 'first', 'batch_size': 'first',
+                                                                    'activation': 'first', 'solver': 'first',
+                                                                    'alpha': 'first', 'learning_rate': 'first',
+                                                                    'learning_rate_init': 'first', 'power_t': 'first',
+                                                                    'shuffle': 'first', 'momentum': 'first',
+                                                                    'nesterovs_momentum': 'first',
+                                                                    'early_stopping': 'first',
+                                                                    'validation_fraction': 'first',
+                                                                    'beta_1': 'first', 'beta_2': 'first',
+                                                                    'epsilon': 'first', 'n_iter_no_change': 'first',
+                                                                    'max_fun': 'first'
+                                                                    })
+    metrics_df = compute_average_metric(metrics_df)
+    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
+    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_MLP, header=True)
+
+
+def create_MLP_classifier(row):
+    params = prepare_MLP_params(row)
+    classifier = MLPClassifier(max_iter=params['max_iter'], hidden_layer_sizes=params['hidden_layer_sizes'],
+                               random_state=params['random_state'], batch_size=params['batch_size'],
+                               activation=params['activation'], solver=params['solver'], alpha=params['alpha'],
+                               learning_rate=params['learning_rate'], learning_rate_init=params['learning_rate_init'],
+                               power_t=params['power_t'], shuffle=params['shuffle'], momentum=params['momentum'],
+                               nesterovs_momentum=params['nesterovs_momentum'], early_stopping=params['early_stopping'],
+                               validation_fraction=params['validation_fraction'], beta_1=params['beta_1'],
+                               beta_2=params['beta_2'], epsilon=params['epsilon'],
+                               n_iter_no_change=params['n_iter_no_change'], max_fun=params['max_fun'])
+    return classifier
+
+

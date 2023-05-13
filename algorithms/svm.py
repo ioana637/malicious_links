@@ -24,58 +24,34 @@ if not sys.warnoptions:
 from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
 
 
-
-# TODO refactor these 4 functions
-def create_SVM_rbf_classifier(row):
+def create_SVM_classifier(kernel: SVM_Kernels, row):
     if (row['gamma'] == 'scale'):
         gamma = 'scale'
+    elif (row['gamma'] == 'None' or row['gamma'] == None or str(row['gamma']) == 'nan'):
+        gamma = None
     else:
         gamma = float(row['gamma'])
-
-    classifier = SVC(probability=True, kernel='rbf', tol=float(row['tol']), C=float(row['C']),
-                     shrinking=bool(row['shrinking']), cache_size=int(row['cache_size']),
-                     class_weight=row['class_weight'], max_iter=int(row['max_iter']), gamma=gamma)
-    return classifier
-
-
-def create_SVM_poly_classifier(row):
-    if (row['gamma'] == 'scale'):
-        gamma = 'scale'
+    if kernel == SVM_Kernels.linear:
+        return SVC(probability=True, kernel=kernel.value, tol=float(row['tol']), C=float(row['C']),
+                   shrinking=bool(row['shrinking']), cache_size=int(row['cache_size']),
+                   class_weight=row['class_weight'],
+                   max_iter=int(row['max_iter']), decision_function_shape=row['decision_function_shape'])
+    elif kernel == SVM_Kernels.rbf:
+        return SVC(probability=True, kernel='rbf', tol=float(row['tol']), C=float(row['C']),
+                   shrinking=bool(row['shrinking']), cache_size=int(row['cache_size']),
+                   class_weight=row['class_weight'], max_iter=int(row['max_iter']), gamma=gamma)
+    elif kernel == SVM_Kernels.sigmoid:
+        return SVC(probability=True, kernel='sigmoid', tol=float(row['tol']), C=float(row['C']),
+                   shrinking=bool(row['shrinking']), cache_size=int(row['cache_size']),
+                   class_weight=row['class_weight'], max_iter=int(row['max_iter']),
+                   gamma=gamma, coef0=float(row['coef0']))
+    elif (kernel == SVM_Kernels.poly):
+        return SVC(probability=True, kernel='poly', tol=float(row['tol']), C=float(row['C']),
+                   shrinking=bool(row['shrinking']), cache_size=int(row['cache_size']),
+                   class_weight=row['class_weight'], max_iter=int(row['max_iter']), gamma=gamma,
+                   degree=int(row['degree']), coef0=float(row['coef0']))
     else:
-        gamma = float(row['gamma'])
-    classifier = SVC(probability=True, kernel='poly', tol=float(row['tol']),
-                     C=float(row['C']),
-                     shrinking=bool(row['shrinking']),
-                     cache_size=int(row['cache_size']),
-                     class_weight=row['class_weight'],
-                     max_iter=int(row['max_iter']),
-                     gamma=gamma,
-                     degree=int(row['degree']),
-                     coef0=float(row['coef0']))
-    return classifier
-
-
-def create_SVM_linear_classifier(row):
-    classifier = SVC(probability=True, kernel='linear', tol=float(row['tol']),
-                     C=float(row['C']),
-                     shrinking=bool(row['shrinking']),
-                     cache_size=int(row['cache_size']),
-                     class_weight=row['class_weight'],
-                     max_iter=int(row['max_iter']),
-                     decision_function_shape=row['decision_function_shape'], )
-    return classifier
-
-
-def create_SVM_sigmoid_classifier(row):
-    if (row['gamma'] == 'scale'):
-        gamma = 'scale'
-    else:
-        gamma = float(row['gamma'])
-    classifier = SVC(probability=True, kernel='sigmoid', tol=float(row['tol']), C=float(row['C']),
-                     shrinking=bool(row['shrinking']), cache_size=int(row['cache_size']),
-                     class_weight=row['class_weight'], max_iter=int(row['max_iter']),
-                     gamma=gamma, coef0=float(row['coef0']))
-    return classifier
+        return None
 
 
 
@@ -809,7 +785,8 @@ def run_algorithm_SVC_poly_kernel_configuration_parallel(X, y, q_metrics, tol=1e
                                      gamma=gamma, degree=degree, coef0=coef0)
             # Compute metrics
             precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
-            queue_results_to_csv = convert_metrics_to_csv(',', label, gamma, cache_size, coef0, degree, tol, C, shrinking,
+            queue_results_to_csv = convert_metrics_to_csv(',', label, gamma, cache_size, coef0, degree, tol, C,
+                                                          shrinking,
                                                           class_weight, max_iter, precision, recall, f1, roc_auc)
             q_metrics.put(queue_results_to_csv)
         except Exception as err:
@@ -1042,14 +1019,11 @@ def run_best_configs_SVM_linear(df_configs, filename='', path='', stratify=True,
                                 normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_SVM_with_linear_kernel()
-    my_filename = os.path.join(path, 'new_results/svm', filename)
+    my_filename = os.path.join(path, 'new_results\\svc', filename)
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():
-            label = create_label_SVM(kernel='linear', tol=row['tol'], C=row['C'], shrinking=row['shrinking'],
-                                     cache_size=row['cache_size'],
-                                     class_weight=row['class_weight'], max_iter=row['max_iter'],
-                                     decision_function_shape=row['decision_function_shape'])
+            label = create_label_SVM_for_row(SVM_Kernels.linear, row)
             run_algorithm_SVC_linear_kernel_configuration(metrics, label, X, y,
                                                           tol=float(row['tol']),
                                                           C=float(row['C']),
@@ -1094,16 +1068,11 @@ def run_best_configs_SVM_RBF(df_configs, filename='', path='', stratify=True, tr
                              normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_SVM_with_RBF_kernel()
-    my_filename = os.path.join(path, 'new_results/svm', filename)
+    my_filename = os.path.join(path, 'new_results\\svc', filename)
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():
-            label = create_label_SVM(kernel='rbf', tol=row['tol'], C=row['C'], shrinking=row['shrinking'],
-                                     cache_size=row['cache_size'],
-                                     class_weight=row['class_weight'],
-                                     max_iter=row['max_iter'],
-                                     gamma=row['gamma']
-                                     )
+            label = create_label_SVM_for_row(SVM_Kernels.rbf, row)
             if (row['gamma'] == 'scale'):
                 gamma = 'scale'
             else:
@@ -1142,14 +1111,7 @@ def run_best_configs_SVM_poly(df_configs, filename='', path='', stratify=True, t
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():
-            label = create_label_SVM(kernel='poly', tol=row['tol'], C=row['C'], shrinking=row['shrinking'],
-                                     cache_size=row['cache_size'],
-                                     class_weight=row['class_weight'],
-                                     max_iter=row['max_iter'],
-                                     gamma=row['gamma'],
-                                     degree=row['degree'],
-                                     coef0=row['coef0'],
-                                     )
+            label = create_label_SVM_for_row(SVM_Kernels.poly, row)
             if (row['gamma'] == 'scale'):
                 gamma = 'scale'
             else:
@@ -1212,12 +1174,7 @@ def run_best_configs_SVM_sigmoid(df_configs, filename='', path='', stratify=True
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():
-            label = create_label_SVM(kernel='sigmoid', tol=row['tol'], C=row['C'], shrinking=row['shrinking'],
-                                     cache_size=row['cache_size'],
-                                     class_weight=row['class_weight'],
-                                     max_iter=row['max_iter'],
-                                     gamma=row['gamma'],
-                                     coef0=row['coef0'])
+            label = create_label_SVM_for_row(SVM_Kernels.sigmoid, row)
             if (row['gamma'] == 'scale'):
                 gamma = 'scale'
             else:

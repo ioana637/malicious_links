@@ -14,7 +14,7 @@ from utils import prediction, split_data, cal_metrics, appendMetricsTOCSV, conve
 import numpy as np
 from itertools import chain
 
-# TODO use for best configs
+
 def prepare_KNN_params(row):
     params = {}
     if (row['weights'] == 'None' or row['weights'] == None or str(row['weights']) == 'nan'):
@@ -43,178 +43,24 @@ def create_KNN_classifier(row):
     return classifier
 
 
-
-def run_top_20_KNN_configs(filename='', path='', stratify=False, train_size=0.8,
-                           normalize_data=True, scaler='min-max', n_rep=100):
+def run_best_configs_knn(df_configs, filename='', path='', stratify=True, train_size=0.8,
+                         normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_KNN()
-
-    # full_path_filename = '/content/drive/MyDrive/code/' + filename
-    # path_to_script = os.path.dirname(os.path.abspath(__file__))
-    my_filename = os.path.join(path, 'new_results/knn', filename)
+    my_filename = os.path.join(path, 'new_results\\knn', filename)
 
     for i in range(1, n_rep):
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = manhattan, p=7, algorithm = ball_tree, n_neighbors = 6, leaf size= 90'
-                                        , X, y, weights='distance', metric='manhattan', p=7, algorithm='ball_tree',
-                                        n_neighbors=6, leaf_size=90, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = manhattan, p=2, algorithm = ball_tree, n_neighbors = 5, leaf size= 13'
-                                        , X, y, weights='distance', metric='manhattan', p=2, algorithm='ball_tree',
-                                        n_neighbors=5, leaf_size=13, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = minkowski, p=4, algorithm = kd_tree, n_neighbors = 4, leaf size= 55'
-                                        , X, y, weights='distance', metric='minkowski', p=4, algorithm='kd_tree',
-                                        n_neighbors=4, leaf_size=95, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = minkowski, p=9, algorithm = ball_tree, n_neighbors = 10, leaf size= 24'
-                                        , X, y, weights='distance', metric='minkowski', p=9, algorithm='ball_tree',
-                                        n_neighbors=10, leaf_size=24, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = manhattan, p=8, algorithm = ball_tree, n_neighbors = 4, leaf size= 53'
-                                        , X, y, weights='distance', metric='manhattan', p=8, algorithm='ball_tree',
-                                        n_neighbors=4, leaf_size=53, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = minkowski, p=8, algorithm = auto, n_neighbors = 8, leaf size= 45'
-                                        , X, y, weights='distance', metric='minkowski', p=8, algorithm='auto',
-                                        n_neighbors=8, leaf_size=45, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = manhattan, p=6, algorithm = auto, n_neighbors = 3, leaf size= 13'
-                                        , X, y, weights='distance', metric='manhattan', p=6, algorithm='auto',
-                                        n_neighbors=3, leaf_size=13, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = euclidean, p=1, algorithm = ball_tree, n_neighbors = 3, leaf size= 69'
-                                        , X, y, weights='distance', metric='euclidean', p=1, algorithm='ball_tree',
-                                        n_neighbors=3, leaf_size=69, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = minkowski, p=1, algorithm = ball_tree, n_neighbors = 3, leaf size= 50'
-                                        , X, y, weights='distance', metric='minkowski', p=1, algorithm='ball_tree',
-                                        n_neighbors=3, leaf_size=50, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = manhattan, p=9, algorithm = kd_tree, n_neighbors = 1, leaf size= 66'
-                                        , X, y, weights='distance', metric='manhattan', p=9, algorithm='kd_tree',
-                                        n_neighbors=1, leaf_size=66, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = euclidean, p=5, algorithm = ball_tree, n_neighbors = 3, leaf size= 86'
-                                        , X, y, weights='distance', metric='euclidean', p=5, algorithm='ball_tree',
-                                        n_neighbors=3, leaf_size=86, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = minkowski, p=1, algorithm = auto, n_neighbors = 6, leaf size= 28'
-                                        , X, y, weights='distance', metric='minkowski', p=1, algorithm='auto',
-                                        n_neighbors=6, leaf_size=28, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = minkowski, p=5, algorithm = auto, n_neighbors = 7, leaf size= 45'
-                                        , X, y, weights='distance', metric='minkowski', p=5, algorithm='auto',
-                                        n_neighbors=7, leaf_size=45, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = manhattan, p=9, algorithm = auto, n_neighbors = 4, leaf size= 44'
-                                        , X, y, weights='distance', metric='manhattan', p=9, algorithm='auto',
-                                        n_neighbors=4, leaf_size=44, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = manhattan, p=2, algorithm = kd_tree, n_neighbors = 6, leaf size= 87'
-                                        , X, y, weights='distance', metric='manhattan', p=2, algorithm='kd_tree',
-                                        n_neighbors=6, leaf_size=87, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = euclidean, p=6, algorithm = auto, n_neighbors = 8, leaf size= 56'
-                                        , X, y, weights='distance', metric='euclidean', p=6, algorithm='auto',
-                                        n_neighbors=8, leaf_size=56, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = minkowski, p=1, algorithm = auto, n_neighbors = 9, leaf size= 54'
-                                        , X, y, weights='distance', metric='minkowski', p=1, algorithm='auto',
-                                        n_neighbors=9, leaf_size=54, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = minkowski, p=1, algorithm = auto, n_neighbors = 7, leaf size= 55'
-                                        , X, y, weights='distance', metric='minkowski', p=1, algorithm='auto',
-                                        n_neighbors=7, leaf_size=55, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = manhattan, p=10, algorithm = auto, n_neighbors = 6, leaf size= 85'
-                                        , X, y, weights='distance', metric='manhattan', p=10, algorithm='auto',
-                                        n_neighbors=6, leaf_size=85, stratify=stratify, train_size=train_size)
-        run_algorithm_KNN_configuration(metrics,
-                                        'KNN, weights = distance,  metric = euclidean, p=4, algorithm = kd_tree, n_neighbors = 3, leaf size= 1'
-                                        , X, y, weights='distance', metric='euclidean', p=4, algorithm='kd_tree',
-                                        n_neighbors=3, leaf_size=1, stratify=stratify, train_size=train_size)
-
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                         , X, y, weights='uniform', metric='manhattan', p=7, algorithm='ball_tree',
-        #                                         n_neighbors=6, leaf_size=1, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=4, algorithm='kd_tree',
-        #                                 n_neighbors=6, leaf_size=1, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='uniform', metric='manhattan', p=1, algorithm='ball_tree',
-        #                                 n_neighbors=6, leaf_size=91, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='uniform', metric='manhattan', p=9, algorithm='ball_tree',
-        #                                 n_neighbors=5, leaf_size=85, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='uniform', metric='manhattan', p=5, algorithm='ball_tree',
-        #                                 n_neighbors=9, leaf_size=1, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='minkowski', p=1, algorithm='kd_tree',
-        #                                 n_neighbors=12, leaf_size=29, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=5, algorithm='kd_tree',
-        #                                 n_neighbors=13, leaf_size=29, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='uniform', metric='manhattan', p=5, algorithm='kd_tree',
-        #                                 n_neighbors=7, leaf_size=87, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=8, algorithm='ball_tree',
-        #                                 n_neighbors=5, leaf_size=85, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='uniform', metric='manhattan', p=2, algorithm='ball_tree',
-        #                                 n_neighbors=7, leaf_size=49, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=9, algorithm='kd_tree',
-        #                                 n_neighbors=3, leaf_size=21, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=7, algorithm='kd_tree',
-        #                                 n_neighbors=4, leaf_size=53, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=4, algorithm='kd_tree',
-        #                                 n_neighbors=4, leaf_size=17, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=3, algorithm='kd_tree',
-        #                                 n_neighbors=11, leaf_size=25, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=1, algorithm='kd_tree',
-        #                                 n_neighbors=9, leaf_size=73, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=8, algorithm='kd_tree',
-        #                                 n_neighbors=10, leaf_size=91, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=4, algorithm='kd_tree',
-        #                                 n_neighbors=6, leaf_size=93, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='uniform', metric='manhattan', p=4, algorithm='kd_tree',
-        #                                 n_neighbors=4, leaf_size=41, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=6, algorithm='ball_tree',
-        #                                 n_neighbors=7, leaf_size=91, stratify=stratify, train_size=train_size)
-        # run_algorithm_KNN_configuration(metrics,
-        #                                 ''
-        #                                 , X, y, weights='distance', metric='manhattan', p=5, algorithm='ball_tree',
-        #                                 n_neighbors=6, leaf_size=5, stratify=stratify, train_size=train_size)
+        for index, row in df_configs.iterrows():
+            # print('index' + str(index))
+            # print(row)
+            label = create_label_for_KNN_for_row(row)
+            params = prepare_KNN_params(row)
+            run_algorithm_KNN_configuration(metrics, label, X, y, n_neighbors=params['n_neighbors'],
+                                            weights=params['weights'], algorithm=params['algorithm'],
+                                            leaf_size=params['leaf_size'], p=params['p'], metric=params['metric'],
+                                            metric_params=params['metric_params'],
+                                            stratify=stratify, train_size=train_size
+                                            )
 
     metrics_df = pd.DataFrame(metrics)
     metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
@@ -222,11 +68,11 @@ def run_top_20_KNN_configs(filename='', path='', stratify=False, train_size=0.8,
                                                                     'n_neighbors': 'first', 'weights': 'first',
                                                                     'algorithm': 'first', 'leaf_size': 'first',
                                                                     'p': 'first', 'metric': 'first',
-                                                                    'metric_params': 'first'
-                                                                    })
+                                                                    'metric_params': 'first'})
     metrics_df = compute_average_metric(metrics_df)
     metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_KNN, header=True)
+
 
 
 def run_algorithm_KNN_configuration(metrics, label, X, y,
@@ -246,7 +92,7 @@ def run_algorithm_KNN_configuration(metrics, label, X, y,
     y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
     # Compute metrics
-    precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+    precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
     metrics['label'].append(label)
     metrics['n_neighbors'].append(n_neighbors)
     metrics['weights'].append(weights)
@@ -286,10 +132,12 @@ def init_metrics_for_KNN():
             'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []
             }
 
+
 def create_label_for_KNN_for_row(row_knn):
     return create_label_for_KNN(row_knn['n_neighbors'], row_knn['weights'], row_knn['algorithm'],
                                 row_knn['leaf_size'], row_knn['p'], row_knn['metric'],
                                 row_knn['metric_params'])
+
 
 def create_label_for_KNN(n_neighbors, weights, algorithm, leaf_size, p, metric, metric_params):
     return "KNN, n_neighbors=" + str(n_neighbors) + ", weights=" + str(weights) + ", algorithm=" + str(
@@ -342,7 +190,8 @@ def run_algorithm_KNN_parallel(filename='', path='', stratify=False, train_size=
     metric_list = ['manhattan', 'euclidean', 'minkowski']
     p_list = list(range(1, 11))
     n_neighbors_list = list(range(1, 11))
-    leaf_size_list = list(chain(range(1, 15), range(20, 35), range(43, 47), range(50, 57), range(65, 70), range(85, 92)))
+    leaf_size_list = list(
+        chain(range(1, 15), range(20, 35), range(43, 47), range(50, 57), range(65, 70), range(85, 92)))
     # 46800
 
     with Manager() as manager:
@@ -357,9 +206,9 @@ def run_algorithm_KNN_parallel(filename='', path='', stratify=False, train_size=
                         for n_neighbors in n_neighbors_list:
                             for leaf_size in leaf_size_list:
                                 job = pool.apply_async(run_algorithm_knn_configuration_parallel,
-                                               (X, y, q_metrics,
-                                                n_neighbors, 'distance', algorithm, leaf_size, p, metric, None,
-                                                stratify, train_size))
+                                                       (X, y, q_metrics,
+                                                        n_neighbors, 'distance', algorithm, leaf_size, p, metric, None,
+                                                        stratify, train_size))
                                 # print(job)
                                 jobs.append(job)
 

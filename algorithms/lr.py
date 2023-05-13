@@ -20,6 +20,7 @@ def create_LR_classifier(row):
                                     l1_ratio=None)
     return classifier
 
+
 def run_algorithm_lr_configuration_parallel(X, y, q_metrics,
                                             penalty='l2', dual=False, tol=1e-4,
                                             C=1.0, fit_intercept=True, intercept_scaling=1,
@@ -61,7 +62,6 @@ def run_algorithm_lr_configuration_parallel(X, y, q_metrics,
         print(warn)
 
 
-
 def run_algorithm_lr_configuration(metrics, label, X, y,
                                    penalty='l2', dual=False, tol=1e-4,
                                    C=1.0, fit_intercept=True, intercept_scaling=1,
@@ -86,7 +86,7 @@ def run_algorithm_lr_configuration(metrics, label, X, y,
         y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
         # Compute metrics
-        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
         metrics['label'].append(label)
 
         metrics['penalty'].append(penalty)
@@ -304,7 +304,7 @@ def run_algorithm_lr(filename='', path='', stratify=False, train_size=0.8,
 
 
 def run_algorithm_lr_parallel(filename='', path='', stratify=False, train_size=0.8,
-                               normalize_data=False, scaler='min-max', no_threads=8):
+                              normalize_data=False, scaler='min-max', no_threads=8):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_LR()
     my_filename = os.path.join(path, 'results/lr', filename)
@@ -348,13 +348,11 @@ def run_best_configs_lr(df_configs, filename='', path='', stratify=True, train_s
                         normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_LR()
-    my_filename = os.path.join(path, 'new_results/lr', filename)
+    my_filename = os.path.join(path, 'new_results\\lr', filename)
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():
-            label = create_label_LR(row['penalty'], row['dual'], row['tol'], row['C'], row['fit_intercept'],
-                                    row['intercept_scaling'], row['class_weight'], row['random_state'], row['solver'],
-                                    row['max_iter'], row['multi_class'], row['l1_ratio'])
+            label = create_label_LR_for_row(row)
             run_algorithm_lr_configuration(metrics, label, X, y,
                                            penalty=row['penalty'], dual=bool(row['dual']), tol=float(row['tol']),
                                            C=float(row['C']), fit_intercept=bool(row['dual']),
@@ -385,10 +383,12 @@ def run_best_configs_lr(df_configs, filename='', path='', stratify=True, train_s
     metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
     metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_LR, header=True)
 
+
 def create_label_LR_for_row(row):
     return create_label_LR(row['penalty'], row['dual'], row['tol'], row['C'], row['fit_intercept'],
                            row['intercept_scaling'], row['class_weight'], row['random_state'], row['solver'],
                            row['max_iter'], row['multi_class'], row['l1_ratio'])
+
 
 def create_label_LR(penalty, dual, tol, C, fit_intercept, intercept_scaling, class_weight, random_state, solver,
                     max_iter, multi_class, l1_ratio):

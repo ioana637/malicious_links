@@ -65,7 +65,7 @@ def run_algorithm_gnb_configuration(metrics, label, X, y,
         y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
         # Compute metrics
-        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
         metrics['label'].append(label)
 
         metrics['var_smoothing'].append(var_smoothing)
@@ -290,7 +290,7 @@ def run_algorithm_bnb_configuration(metrics, label, X, y,
         y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
         # Compute metrics
-        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
         metrics['label'].append(label)
 
         metrics['alpha'].append(alpha)
@@ -302,18 +302,18 @@ def run_algorithm_bnb_configuration(metrics, label, X, y,
         metrics['f1_score'].append(f1)
         metrics['roc_auc'].append(roc_auc)
     except Exception as err:
-        pass
-        # print(err)
+        # pass
+        print(err)
     except RuntimeWarning as warn:
-        # print(warn)
-        pass
+        print(warn)
+        # pass
 
 
 def run_best_configs_gnb(df_configs, filename='', path='', stratify=True, train_size=0.8,
                          normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_GNB()
-    my_filename = os.path.join(path, 'new_results/nb', filename)
+    my_filename = os.path.join(path, 'new_results\\nb', filename)
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():
@@ -342,7 +342,7 @@ def run_best_configs_bnb(df_configs, filename='', path='', stratify=True, train_
                         normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_BNB()
-    my_filename = os.path.join(path, 'new_results/nb', filename)
+    my_filename = os.path.join(path, 'new_results\\nb', filename)
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():

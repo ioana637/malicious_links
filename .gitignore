@@ -132,4 +132,6 @@ dmypy.json
 results
 new_results
 new_results_1
+new_results_2
 data
+utils/mycache

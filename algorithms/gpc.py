@@ -3,6 +3,9 @@ import warnings
 from itertools import chain
 from multiprocessing import Manager, Pool
 
+import pandas as pd
+
+from data_post import compute_average_metric
 from data_pre import load_normalized_dataset, split_data_in_testing_training
 
 warnings.filterwarnings("error")
@@ -17,6 +20,11 @@ def create_label_for_GPC(kernel, n_restarts_optimizer, max_iter_predict, copy_X_
     return "GPC, kernel=" + str(kernel) + ", n_restarts_optimizer=" + str(
         n_restarts_optimizer) + ", max_iter_predict=" + \
            str(max_iter_predict) + ", copy_X_train=" + str(copy_X_train) + ", multi_class=" + str(multi_class)
+
+
+def create_label_for_GPC_for_row(row):
+    return create_label_for_GPC(row['kernel'], row['n_restarts_optimizer'], row['max_iter_predict'],
+                                row['copy_X_train'], row['multi_class'])
 
 
 def run_algorithm_gaussian_process_configuration_parallel(X, y, q_metrics,
@@ -77,7 +85,7 @@ def run_algorithm_gaussian_process_configuration(metrics, label, X, y,
         y_pred, y_pred_probabilities = prediction(X_test, classifier)
 
         # Compute metrics
-        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label)
+        precision, recall, f1, roc_auc = cal_metrics(y_test, y_pred, y_pred_probabilities, label, classifier)
         metrics['label'].append(label)
 
         metrics['kernel'].append(kernel)
@@ -322,3 +330,65 @@ def run_algorithm_gpc_parallel(filename='', path='', stratify=False, train_size=
             q_metrics.put('kill')
             pool.close()
             pool.join()
+
+
+def prepare_GPC_params(row):
+    # kernel=None
+    params_dict = {}
+    if (row['kernel'].startswith('DotProduct')):
+        sigma_0 = 1.0
+        sigma_str = row['kernel'].replace('DotProduct', '').replace('(', '').replace(")", '').replace("sigma_0=", '')
+        if (sigma_str):
+            sigma_0 = float(sigma_str)
+        params_dict['kernel'] = DotProduct(sigma_0=sigma_0)
+    else:
+        params_dict['kernel'] = None
+
+    params_dict['multi_class'] = row['multi_class']
+    params_dict['copy_X_train'] = bool(row['copy_X_train'])
+    params_dict['max_iter_predict'] = int(row['max_iter_predict'])
+    params_dict['n_restarts_optimizer'] = int(row['n_restarts_optimizer'])
+
+    return params_dict
+
+
+def run_best_configs_GPC(df_configs, filename='', path='', stratify=True, train_size=0.8,
+                         normalize_data=True, scaler='min-max', n_rep=100):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_GPC()
+    my_filename = os.path.join(path, 'new_results\\gpc', filename)
+
+    for i in range(1, n_rep):
+        for index, row in df_configs.iterrows():
+            # print('index' + str(index))
+            # print(row)
+            label = create_label_for_GPC_for_row(row)
+            params = prepare_GPC_params(row)
+            run_algorithm_gaussian_process_configuration(metrics, label, X, y,
+                                                         kernel=params['kernel'],
+                                                         n_restarts_optimizer=params['n_restarts_optimizer'],
+                                                         max_iter_predict=params['max_iter_predict'],
+                                                         copy_X_train=params['copy_X_train'],
+                                                         multi_class=params['multi_class'],
+                                                         stratify=stratify, train_size=train_size
+                                                         )
+
+    metrics_df = pd.DataFrame(metrics)
+    metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
+                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
+                                                                    'kernel': 'first', 'n_restarts_optimizer': 'first',
+                                                                    'max_iter_predict': 'first',
+                                                                    'copy_X_train': 'first',
+                                                                    'multi_class': 'first'})
+    metrics_df = compute_average_metric(metrics_df)
+    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
+    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_GPC, header=True)
+
+
+def create_GPC_classifier(row):
+    params = prepare_GPC_params(row)
+    classifier = GaussianProcessClassifier(kernel=params['kernel'], n_restarts_optimizer=params['n_restarts_optimizer'],
+                                           max_iter_predict=params['max_iter_predict'],
+                                           copy_X_train=params['copy_X_train'],
+                                           multi_class=params['multi_class'], n_jobs=-1)
+    return classifier

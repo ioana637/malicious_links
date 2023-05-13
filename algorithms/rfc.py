@@ -16,9 +16,70 @@ from data_pre import load_normalized_dataset, split_data_in_testing_training
 from utils import split_data, prediction, cal_metrics, appendMetricsTOCSV, listener_write_to_file, \
     convert_metrics_to_csv
 
-# TODO reuse for best configs
+
+def run_best_configs_rfc(df_configs, filename='', path='', stratify=True, train_size=0.8,
+                         normalize_data=True, scaler='min-max', n_rep=100):
+    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
+    metrics = init_metrics_for_rfc()
+    my_filename = os.path.join(path, 'new_results\\rfc', filename)
+
+    for i in range(1, n_rep):
+        for index, row in df_configs.iterrows():
+            # print('index' + str(index))
+            # print(row)
+            label = create_label_for_rfc_for_row(row)
+            params = prepare_RF_params(row)
+            run_algorithm_rfc_configuration(metrics, label, X, y, criterion=params['criterion'],
+                                            n_estimators=params['n_estimators'],
+                                            min_samples_leaf=params['min_samples_leaf'],
+                                            min_samples_split=params['min_samples_split'],
+                                            max_depth=params['max_depth'],
+                                            max_leaf_nodes=params['max_leaf_nodes'],
+                                            max_features=params['max_features'],
+                                            min_weight_fraction_leaf=params['min_weight_fraction_leaf'],
+                                            min_impurity_decrease=params['min_impurity_decrease'],
+                                            bootstrap=params['bootstrap'], oob_score=params['oob_score'],
+                                            class_weight=params['class_weight'],
+                                            ccp_alpha=params['ccp_alpha'],
+                                            max_samples=params['max_samples'],
+                                            stratify=stratify, train_size=train_size)
+
+    metrics_df = pd.DataFrame(metrics)
+    metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
+                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
+                                                                    'criterion': 'first',
+                                                                    'n_estimators': 'first',
+                                                                    'min_samples_leaf': 'first',
+                                                                    'min_samples_split': 'first',
+                                                                    'max_depth': 'first',
+                                                                    'max_leaf_nodes': 'first',
+                                                                    'max_features': 'first',
+                                                                    'min_weight_fraction_leaf': 'first',
+                                                                    'min_impurity_decrease': 'first',
+                                                                    'bootstrap': 'first',
+                                                                    'oob_score': 'first',
+                                                                    'class_weight': 'first',
+                                                                    'ccp_alpha': 'first',
+                                                                    'max_samples': 'first'
+                                                                    })
+    metrics_df = compute_average_metric(metrics_df)
+    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
+    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_rfc, header=True)
+
+
 def prepare_RF_params(row):
     params_dict = {}
+
+    if (float(row['min_samples_split']) < 1.0):
+        params_dict['min_samples_split'] = float(row['min_samples_split'])
+    else:
+        params_dict['min_samples_split'] = int(row['min_samples_split'])
+
+    if (float(row['min_samples_leaf']) < 1.0):
+        params_dict['min_samples_leaf'] = float(row['min_samples_leaf'])
+    else:
+        params_dict['min_samples_leaf'] = int(row['min_samples_leaf'])
+
     if (row['max_samples'] == 'None' or row['max_samples'] == None or str(row['max_samples']) == 'nan'):
         params_dict['max_samples'] = None
     else:
@@ -43,8 +104,6 @@ def prepare_RF_params(row):
 
     params_dict['n_estimators'] = int(row['n_estimators'])
     params_dict['criterion'] = row['criterion']
-    params_dict['min_samples_leaf'] = float(row['min_samples_leaf'])
-    params_dict['min_samples_split'] = float(row['min_samples_split'])
     params_dict['min_weight_fraction_leaf'] = float(row['min_weight_fraction_leaf'])
     params_dict['min_impurity_decrease'] = float(row['min_impurity_decrease'])
     params_dict['bootstrap'] = bool(row['bootstrap'])
@@ -66,237 +125,6 @@ def create_RF_classifier(row):
                                   bootstrap=params['bootstrap'], oob_score=params['oob_score'],
                                   max_samples=params['max_samples'], ccp_alpha=params['ccp_alpha'],
                                   class_weight=params['class_weight'])
-
-def run_top_20_RFC_configs(filename='', path='', stratify=False, train_size=0.8,
-                           normalize_data=True, scaler='min-max', n_rep=100):
-    y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
-    metrics = init_metrics_for_rfc()
-
-    # full_path_filename = '/content/drive/MyDrive/code/' + filename
-    # path_to_script = os.path.dirname(os.path.abspath(__file__))
-    my_filename = os.path.join(path, 'new_results/rfc', filename)
-
-    for i in range(1, n_rep):
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 110, max_depth=13, min_samples_leaf=1, max_leaf_nodes=1560, min_samples_split=6, class_weight=balanced',
-                                        X, y, criterion='entropy', n_estimators=110, max_depth=13, min_samples_leaf=1,
-                                        max_leaf_nodes=1560, min_samples_split=6, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 90, max_depth=52, min_samples_leaf=3, max_leaf_nodes=684, min_samples_split=4, class_weight=balanced ',
-                                        X, y, criterion='entropy', n_estimators=90, max_depth=52, min_samples_leaf=3,
-                                        max_leaf_nodes=684, min_samples_split=4, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 51, max_depth=54, min_samples_leaf=1, max_leaf_nodes=1560, min_samples_split=4, class_weight=balanced',
-                                        X, y, criterion='entropy', n_estimators=51, max_depth=54, min_samples_leaf=1,
-                                        max_leaf_nodes=1560, min_samples_split=4, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 100, max_depth=11, min_samples_leaf=1, max_leaf_nodes=1563, min_samples_split=6, class_weight=balanced',
-                                        X, y, criterion='entropy', n_estimators=100, max_depth=11, min_samples_leaf=1,
-                                        max_leaf_nodes=1563, min_samples_split=6, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, gini, n_estimators = 110, max_depth=12, min_samples_leaf=3, max_leaf_nodes=680, min_samples_split=8, class_weight=balanced  ',
-                                        X, y, criterion='gini', n_estimators=110, max_depth=12, min_samples_leaf=3,
-                                        max_leaf_nodes=680, min_samples_split=8, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 90, max_depth=50, min_samples_leaf=3, max_leaf_nodes=683, min_samples_split=10, class_weight=balanced ',
-                                        X, y, criterion='entropy', n_estimators=90, max_depth=50, min_samples_leaf=3,
-                                        max_leaf_nodes=683, min_samples_split=10, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 51, max_depth=13, min_samples_leaf=1, max_leaf_nodes=1561, min_samples_split=8, class_weight=balanced ',
-                                        X, y, criterion='entropy', n_estimators=51, max_depth=13, min_samples_leaf=1,
-                                        max_leaf_nodes=1561, min_samples_split=8, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 90, max_depth=13, min_samples_leaf=3, max_leaf_nodes=680, min_samples_split=10, class_weight=balanced',
-                                        X, y, criterion='entropy', n_estimators=90, max_depth=13, min_samples_leaf=3,
-                                        max_leaf_nodes=680, min_samples_split=10, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, gini, n_estimators = 110, max_depth=14, min_samples_leaf=3, max_leaf_nodes=None, min_samples_split=4, class_weight=balanced  ',
-                                        X, y, criterion='gini', n_estimators=110, max_depth=14, min_samples_leaf=3,
-                                        max_leaf_nodes=None, min_samples_split=4, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 50, max_depth=14, min_samples_leaf=1, max_leaf_nodes=683, min_samples_split=8, class_weight=balanced   ',
-                                        X, y, criterion='entropy', n_estimators=50, max_depth=14, min_samples_leaf=1,
-                                        max_leaf_nodes=683, min_samples_split=8, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, gini, n_estimators = 50, max_depth=50, min_samples_leaf=1, max_leaf_nodes=1562, min_samples_split=8, class_weight=balanced ',
-                                        X, y, criterion='gini', n_estimators=50, max_depth=50, min_samples_leaf=1,
-                                        max_leaf_nodes=1562, min_samples_split=8, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, gini, n_estimators = 90, max_depth=51, min_samples_leaf=1, max_leaf_nodes=684, min_samples_split=6, class_weight=balanced ',
-                                        X, y, criterion='gini', n_estimators=90, max_depth=51, min_samples_leaf=1,
-                                        max_leaf_nodes=684, min_samples_split=6, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 50, max_depth=12, min_samples_leaf=3, max_leaf_nodes=682, min_samples_split=2, class_weight=balanced ',
-                                        X, y, criterion='entropy', n_estimators=50, max_depth=12, min_samples_leaf=3,
-                                        max_leaf_nodes=682, min_samples_split=2, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 90, max_depth=10, min_samples_leaf=3, max_leaf_nodes=1564, min_samples_split=4, class_weight=balanced  ',
-                                        X, y, criterion='entropy', n_estimators=90, max_depth=10, min_samples_leaf=3,
-                                        max_leaf_nodes=1564, min_samples_split=4, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 51, max_depth=11, min_samples_leaf=3, max_leaf_nodes=680, min_samples_split=2, class_weight=balanced ',
-                                        X, y, criterion='entropy', n_estimators=51, max_depth=11, min_samples_leaf=3,
-                                        max_leaf_nodes=680, min_samples_split=2, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 100, max_depth=54, min_samples_leaf=3, max_leaf_nodes=1562, min_samples_split=6, class_weight=balanced',
-                                        X, y, criterion='entropy', n_estimators=100, max_depth=54, min_samples_leaf=3,
-                                        max_leaf_nodes=1562, min_samples_split=6, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 110, max_depth=53, min_samples_leaf=3, max_leaf_nodes=1564, min_samples_split=4, class_weight=balanced ',
-                                        X, y, criterion='entropy', n_estimators=110, max_depth=53, min_samples_leaf=3,
-                                        max_leaf_nodes=1564, min_samples_split=4, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, gini, n_estimators = 90, max_depth=14, min_samples_leaf=1, max_leaf_nodes=None, min_samples_split=4, class_weight=balanced     ',
-                                        X, y, criterion='gini', n_estimators=90, max_depth=14, min_samples_leaf=1,
-                                        max_leaf_nodes=None, min_samples_split=4, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, entropy, n_estimators = 100, max_depth=11, min_samples_leaf=1, max_leaf_nodes=680, min_samples_split=6, class_weight=balanced  ',
-                                        X, y, criterion='entropy', n_estimators=100, max_depth=11, min_samples_leaf=1,
-                                        max_leaf_nodes=680, min_samples_split=6, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        run_algorithm_rfc_configuration(metrics,
-                                        'RF, gini, n_estimators = 100, max_depth=54, min_samples_leaf=1, max_leaf_nodes=1561, min_samples_split=10, class_weight=balanced  ',
-                                        X, y, criterion='gini', n_estimators=100, max_depth=54, min_samples_leaf=1,
-                                        max_leaf_nodes=1561, min_samples_split=10, class_weight='balanced',
-                                        stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='gini', n_estimators=100, max_depth=12, min_samples_leaf=1,
-        #                                 max_leaf_nodes=1773, min_samples_split=4, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='gini', n_estimators=100, max_depth=12, min_samples_leaf=3,
-        #                                 max_leaf_nodes=1328, min_samples_split=5, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='entropy', n_estimators=100, max_depth=12, min_samples_leaf=5,
-        #                                 max_leaf_nodes=1080, min_samples_split=3, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='gini', n_estimators=100, max_depth=12, min_samples_leaf=5,
-        #                                 max_leaf_nodes=323, min_samples_split=5, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='entropy', n_estimators=100, max_depth=12, min_samples_leaf=1,
-        #                                 max_leaf_nodes=539, min_samples_split=9, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='entropy', n_estimators=100, max_depth=12, min_samples_leaf=3,
-        #                                 max_leaf_nodes=560, min_samples_split=3, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='entropy', n_estimators=100, max_depth=12, min_samples_leaf=5,
-        #                                 max_leaf_nodes=317, min_samples_split=7, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='entropy', n_estimators=100, max_depth=12, min_samples_leaf=1,
-        #                                 max_leaf_nodes=1328, min_samples_split=5, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='gini', n_estimators=100, max_depth=12, min_samples_leaf=3,
-        #                                 max_leaf_nodes=954, min_samples_split=8, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='gini', n_estimators=100, max_depth=12, min_samples_leaf=5,
-        #                                 max_leaf_nodes=195, min_samples_split=8, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='gini', n_estimators=100, max_depth=12, min_samples_leaf=5,
-        #                                 max_leaf_nodes=201, min_samples_split=7, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='entropy', n_estimators=100, max_depth=12, min_samples_leaf=3,
-        #                                 max_leaf_nodes=539, min_samples_split=6, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='entropy', n_estimators=100, max_depth=12, min_samples_leaf=5,
-        #                                 max_leaf_nodes=35, min_samples_split=9, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='gini', n_estimators=100, max_depth=12, min_samples_leaf=1,
-        #                                 max_leaf_nodes=323, min_samples_split=8, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='entropy', n_estimators=100, max_depth=12, min_samples_leaf=7,
-        #                                 max_leaf_nodes=1080, min_samples_split=9, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='entropy', n_estimators=100, max_depth=12, min_samples_leaf=3,
-        #                                 max_leaf_nodes=562, min_samples_split=8, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='gini', n_estimators=100, max_depth=12, min_samples_leaf=13,
-        #                                 max_leaf_nodes=1300, min_samples_split=7, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='entropy', n_estimators=100, max_depth=12, min_samples_leaf=7,
-        #                                 max_leaf_nodes=1000, min_samples_split=4, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='entropy', n_estimators=100, max_depth=12, min_samples_leaf=17,
-        #                                 max_leaf_nodes=1000, min_samples_split=9, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-        # run_algorithm_rfc_configuration(metrics,
-        #                                 '',
-        #                                 X, y, criterion='gini', n_estimators=100, max_depth=12, min_samples_leaf=3,
-        #                                 max_leaf_nodes=1336, min_samples_split=4, class_weight='balanced',
-        #                                 stratify=stratify, train_size=train_size)
-
-    metrics_df = pd.DataFrame(metrics)
-    metrics_df = metrics_df.groupby(['label'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
-                                                                    'f1_score': 'mean', 'roc_auc': 'mean',
-                                                                    'n_estimators': 'first',
-                                                                    'bootstrap': 'first', 'oob_score': 'first',
-                                                                    'max_samples': 'first',
-                                                                    'min_samples_leaf': 'first',
-                                                                    'min_samples_split': 'first',
-                                                                    'min_weight_fraction_leaf': 'first',
-                                                                    'max_features': 'first',
-                                                                    'max_leaf_nodes': 'first',
-                                                                    'min_impurity_decrease': 'first',
-                                                                    'class_weight': 'first',
-                                                                    'ccp_alpha': 'first',
-                                                                    'max_depth': 'first',
-                                                                    'criterion': 'first'})
-    metrics_df = compute_average_metric(metrics_df)
-    metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
-    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_rfc, header=True)
 
 
 def run_algorithm_rfc_configuration_feature_importance(criterion='gini', n_estimators=100,
@@ -389,7 +217,8 @@ def run_algorithm_rfc_parallel(filename='', path='', stratify=False, train_size=
                                 for max_leaf_nodes in max_leaf_nodes_list:
                                     job = pool.apply_async(run_algorithm_rfc_configuration_parallel,
                                                            (X, y, q_metrics,
-                                                            criterion, n_estimators, min_samples_leaf, min_samples_split,
+                                                            criterion, n_estimators, min_samples_leaf,
+                                                            min_samples_split,
                                                             max_depth, max_leaf_nodes, 'sqrt', 0.0, 0.0, True, False,
                                                             'balanced', 0.0, None,
                                                             stratify, train_size))
@@ -405,13 +234,15 @@ def run_algorithm_rfc_parallel(filename='', path='', stratify=False, train_size=
             pool.close()
             pool.join()
 
+
 def create_label_for_rfc_for_row(row_rf):
     return create_label_for_rfc(row_rf['criterion'], row_rf['n_estimators'],
-                         row_rf['min_samples_leaf'], row_rf['min_samples_split'],
-                         row_rf['max_depth'], row_rf['max_leaf_nodes'], row_rf['max_features'],
-                         row_rf['min_weight_fraction_leaf'], row_rf['min_impurity_decrease'],
-                         row_rf['bootstrap'], row_rf['oob_score'], 'balanced',
-                         row_rf['ccp_alpha'], row_rf['max_samples'])
+                                row_rf['min_samples_leaf'], row_rf['min_samples_split'],
+                                row_rf['max_depth'], row_rf['max_leaf_nodes'], row_rf['max_features'],
+                                row_rf['min_weight_fraction_leaf'], row_rf['min_impurity_decrease'],
+                                row_rf['bootstrap'], row_rf['oob_score'], 'balanced',
+                                row_rf['ccp_alpha'], row_rf['max_samples'])
+
 
 def create_label_for_rfc(criterion, n_estimators, min_samples_leaf, min_samples_split, max_depth,
                          max_leaf_nodes, max_features, min_weight_fraction_leaf,
@@ -553,16 +384,10 @@ def run_algorithm_rfc_configuration_with_k_fold(X, y,
 
 def init_metrics_for_rfc():
     return {'label': [],
-            'criterion': [], 'n_estimators': [],
-            'min_samples_leaf': [], 'min_samples_split': [], 'max_depth': [],
-            'max_leaf_nodes': [], 'max_features': [], 'min_weight_fraction_leaf': [],
-            'min_impurity_decrease': [], 'bootstrap': [], 'oob_score': [],
-            'class_weight': [], 'ccp_alpha': [], 'max_samples': [],
-            'precision': [],
-            'recall': [],
-            'f1_score': [],
-            'roc_auc': []
-            }
+            'criterion': [], 'n_estimators': [], 'min_samples_leaf': [], 'min_samples_split': [],
+            'max_depth': [], 'max_leaf_nodes': [], 'max_features': [], 'min_weight_fraction_leaf': [],
+            'min_impurity_decrease': [], 'bootstrap': [], 'oob_score': [], 'class_weight': [], 'ccp_alpha': [],
+            'max_samples': [], 'precision': [], 'recall': [], 'f1_score': [], 'roc_auc': []}
 
 
 def run_algorithm_rf(filename='', path='', stratify=False, train_size=0.8,

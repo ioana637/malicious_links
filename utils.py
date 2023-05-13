@@ -4,6 +4,7 @@ from time import sleep
 
 import pandas as pd
 from sklearn import preprocessing
+from sklearn.base import BaseEstimator
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_score, recall_score, f1_score, roc_curve, roc_auc_score
 import numpy as np
@@ -13,7 +14,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 def convert_metrics_to_csv(separator=',', *args):
     string_args = ''
     for arg in args:
-        if isinstance(arg, list) or type(arg) == str:
+        if isinstance(arg, list) or type(arg) == str or isinstance(arg, BaseEstimator):
             arg = '"' + str(arg) + '"'
         if (string_args == ''):
             string_args = str(arg)
