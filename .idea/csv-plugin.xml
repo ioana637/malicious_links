@@ -45,13 +45,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\new_results\ens\metrics_DN_standard_ENSEMBLE_train_size_80_with_stratify_12_05_2023_12_12.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\new_results\knn\best-knn.csv">
           <value>
             <Attribute>
@@ -123,6 +116,27 @@
           </value>
         </entry>
         <entry key="\new_results\xgb\best-xgb.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results_2\knn\complete_results_train_size_different\metrics_DN_min_max_KNN_train_size_20_with_stratify_09_02_2023_18_41 - Copy.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results_2\knn\have_bug\metrics_DN_standard_KNN_train_size_30_with_stratify_04_02_2023_08_06.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results_2\knn\metrics_DN_standard_KNN_train_size_80_with_stratify_13_02_2023_10_03.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

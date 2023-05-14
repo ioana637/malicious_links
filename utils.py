@@ -80,6 +80,17 @@ def data_normalization(X, y, stratify=False, train_size=0.8):
 
     return X_train, X_test, y_train, y_test
 
+def listener_write_to_file_ensemble_withoutnewline(q, filename):
+    '''listens for messages on the q, writes to file. '''
+    with open(filename, 'a') as f:
+        while 1:
+            m = q.get()
+            if m == 'kill':
+                break
+            f.write(m)
+            f.flush()
+
+
 def listener_write_to_file(q, filename):
     '''listens for messages on the q, writes to file. '''
     with open(filename, 'a') as f:
@@ -113,7 +124,7 @@ def cal_metrics_general(y_test, y_pred, y_pred_probabilities):
     precision = precision_score(y_test, y_pred, pos_label=1) * 100
     # print ("Precision : ", precision)
 
-    recall = recall_score(y_test, y_pred) * 100
+    recall = recall_score(y_test, y_pred, pos_label=1) * 100
     # print ("Recall : ", recall)
 
     f1 = f1_score(y_test, y_pred, pos_label=1, labels=np.unique(y_pred)) * 100

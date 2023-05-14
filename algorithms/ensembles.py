@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import ignore_warnings
@@ -20,6 +21,8 @@ from algorithms.xgb import create_label_for_XGB_for_row, create_XGB_classifier
 from data_post import compute_average_metric, compute_roc_auc_score_100
 from data_pre import split_data_in_testing_training, load_normalized_dataset
 from utils import prediction, appendMetricsTOCSV, cal_metrics_general
+
+np.set_printoptions(linewidth=100000)
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -124,7 +127,6 @@ def load_df_configs_for_algs(ens: [Algorithms]):
     return df_configs
 
 
-
 def create_classifiers(algs, rows):
     classifiers = []
     for i in range(0, len(algs)):
@@ -166,9 +168,9 @@ def create_classifiers(algs, rows):
     return classifiers
 
 
-def run_algorithm_ensemble_parallel(filename='', path='', stratify=True, train_size=0.8,
-                           normalize_data=True, scaler='min-max', no_repeats=100, ens: [Algorithms] = None,
-                           ):
+def run_algorithm_ensemble_parallel(q_metrics, filename='', path='', stratify=True, train_size=0.8,
+                                    normalize_data=True, scaler='min-max', no_repeats=100, ens: [Algorithms] = None,
+                                    ):
     if ens == None or len(ens) < 3:
         return
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
@@ -194,22 +196,22 @@ def run_algorithm_ensemble_parallel(filename='', path='', stratify=True, train_s
                 for i in range(0, no_repeats):
                     label, ensemble = create_label_for_ensemble(algs, [row_1, row_2, row_3])
                     classifiers = create_classifiers(algs, [row_1, row_2, row_3])
-
                     run_algorithm_ensemble_configuration(metrics, label, ensemble, X, y, classifiers, len(classifiers),
                                                          train_size=train_size, stratify=stratify)
 
     metrics_df = pd.DataFrame(metrics)
     metrics_df = metrics_df.groupby(['label'], as_index=False).agg(
-        {'precision': 'mean', 'recall': 'mean', 'f1_score': 'mean', 'roc_auc': 'mean'})
+        {'ensemble': 'first', 'precision': 'mean', 'recall': 'mean', 'f1_score': 'mean', 'roc_auc': 'mean'})
     metrics_df = compute_average_metric(metrics_df)
     metrics_df = compute_roc_auc_score_100(metrics_df)
     metrics_df.sort_values(by=['average_metric'], ascending=False, inplace=True)
-    metrics = appendMetricsTOCSV(my_filename, metrics_df, init_metrics_for_ensembles, header=False)
+    string_results_for_queue = metrics_df.to_csv(index=False, header=False, line_terminator='')
+    string_results_for_queue = string_results_for_queue.replace("\n", '')
+    q_metrics.put(string_results_for_queue)
 
 
 def run_algorithm_ensemble(filename='', path='', stratify=True, train_size=0.8,
-                           normalize_data=True, scaler='min-max', no_repeats=100, ens: [Algorithms] = None,
-                           ):
+                           normalize_data=True, scaler='min-max', no_repeats=100, ens: [Algorithms] = None):
     if ens == None or len(ens) < 3:
         return
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
@@ -287,7 +289,7 @@ def create_label_for_ensemble(algs: [Algorithms], rows: []):
         if ensemble == '':
             ensemble += str(alg.value).upper()
         else:
-            ensemble += "-"+str(alg.value).upper()
+            ensemble += "-" + str(alg.value).upper()
 
     label += '::'
     for i in range(0, len(algs)):
