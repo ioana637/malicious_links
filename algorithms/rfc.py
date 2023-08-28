@@ -119,7 +119,7 @@ def create_RF_classifier(row):
     return RandomForestClassifier(n_estimators=params['n_estimators'], criterion=params['criterion'],
                                   min_samples_leaf=params['min_samples_leaf'], max_depth=params['max_depth'],
                                   min_samples_split=params['min_samples_split'], max_features=params['max_features'],
-                                  max_leaf_nodes=params['max_leaf_nodes'], n_jobs=params['n_jobs'],
+                                  max_leaf_nodes=params['max_leaf_nodes'], n_jobs=1,
                                   min_weight_fraction_leaf=params['min_weight_fraction_leaf'],
                                   min_impurity_decrease=params['min_impurity_decrease'],
                                   bootstrap=params['bootstrap'], oob_score=params['oob_score'],

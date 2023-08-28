@@ -587,7 +587,7 @@ def run_best_configs_mlp(df_configs, filename='', path='', stratify=True, train_
                          normalize_data=True, scaler='min-max', n_rep=100):
     y, X = load_normalized_dataset(file=None, normalize=normalize_data, scaler=scaler)
     metrics = init_metrics_for_MLP()
-    my_filename = os.path.join(path, 'results/mlp', filename)
+    my_filename = os.path.join(path, 'new_results/mlp', filename)
 
     for i in range(1, n_rep):
         for index, row in df_configs.iterrows():

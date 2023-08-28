@@ -32,10 +32,10 @@ def main_parallel():
     # print("\nName of Python script:", sys.argv[0])
     # algs = [alg for alg in Algorithms]
     threads = int(sys.argv[1])  # no. of threads created for running
-    algs = [Algorithms.ADA, Algorithms.LR, Algorithms.BNB, Algorithms.LDA]
+    # algs = [Algorithms.ADA, Algorithms.LR, Algorithms.BNB, Algorithms.LDA]
     # TODO add MLP
-    # algs = [Algorithms.ADA, Algorithms.LR, Algorithms.BNB, Algorithms.LDA,
-    #         Algorithms.XGB, Algorithms.KNN, Algorithms.DT, Algorithms.RF, Algorithms.SVM_rbf]
+    algs = [Algorithms.ADA, Algorithms.LR, Algorithms.BNB, Algorithms.LDA, Algorithms.MLP,
+            Algorithms.XGB, Algorithms.KNN, Algorithms.DT, Algorithms.RF, Algorithms.SVM_rbf]
 
     combos = list(combinations(algs, 3))
 

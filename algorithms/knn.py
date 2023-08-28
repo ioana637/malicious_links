@@ -39,7 +39,7 @@ def create_KNN_classifier(row):
     classifier = KNeighborsClassifier(n_neighbors=params['n_neighbors'], weights=params['weights'],
                                       algorithm=params['algorithm'], p=params['p'],
                                       leaf_size=params['leaf_size'], metric=params['metric'],
-                                      metric_params=params['metric_params'], n_jobs=params['n_jobs'])
+                                      metric_params=params['metric_params'], n_jobs=1)
     return classifier
 
 

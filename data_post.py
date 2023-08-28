@@ -60,13 +60,20 @@ def compute_avg_for_each_parameter(df):
         # print('Column Contents : ', columnData.values)
 # 5. List top 20 configurations based on the average_metric, sort their parameters
 def determine_top_configuration(df, top_k = 20):
+    # df = df.groupby(['ensemble'], as_index=False).agg({'precision': 'mean', 'recall': 'mean',
+    #                                            'f1_score': 'mean', 'roc_auc': 'mean',
+    #                                            'average_metric': 'mean',
+    #                                            'roc_auc_100': 'mean',
+    #                                            'label': 'first'
+    #                                            })
     df.sort_values(by =['average_metric'], ascending=False, inplace=True)
     top_k_df = df.head(top_k)
     # print parameters of the algorithm
     # all columns, excepting label, precision, recall, f1_score, roc_auc,average_metric
     params = {}
     for (columnName, columnData) in top_k_df.iteritems():
-        if (columnName in ['label','precision', 'recall', 'f1_score', 'roc_auc','average_metric' ]):
+        # if (columnName in ['label', 'precision', 'recall', 'f1_score', 'roc_auc','average_metric' ]):
+        if (columnName in ['label', 'precision', 'recall', 'f1_score', 'roc_auc','average_metric' ]):
             continue
         try:
             unique_values = unique(columnData.values)
@@ -81,11 +88,11 @@ def determine_top_configuration(df, top_k = 20):
 def main_data_post():
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     # my_filename = os.path.join(path_to_script, 'new_results/knn', filename) # for Linux
-    my_filename = os.path.join(path_to_script, 'new_results\\mlp',
-                                'metrics_DN_min_max_MLP_train_size_80_with_stratify_30_03_2023_17_33.csv')
+    my_filename = os.path.join(path_to_script, 'new_results\\ada',
+                               'metrics_DN_min_max_ADA_train_size_80_with_stratify_01_05_2023_06_49.csv')
                                 # 'metrics_DN_standard_KNN_train_size_80_with_stratify_13_02_2023_10_03.csv')
-    my_filename_1 = os.path.join(path_to_script, 'new_results\\mlp',
-                               'metrics_DN_standard_MLP_train_size_80_with_stratify_19_04_2023_08_37.csv')
+    my_filename_1 = os.path.join(path_to_script, 'new_results\\ada',
+                               'metrics_DN_standard_ADA_train_size_80_with_stratify_01_05_2023_06_49.csv')
     df1 = load_results_from_file(my_filename)
     df2 = load_results_from_file(my_filename_1)
     df = df1.append(df2)
@@ -97,11 +104,11 @@ def main_data_post():
     print('--------------------- MIN ---------------------')
     print(compute_min_for_metrics(df))
     #
-    # top_k_df, params = determine_top_configuration(df, top_k=30)
-    # print(top_k_df.to_csv('new_results/mlp/best-mlp.csv'))
+    top_k_df, params = determine_top_configuration(df, top_k=120)
+    print(top_k_df.to_csv('new_results/ens/best-ens.csv'))
     # print_dict(params)
 
-    compute_avg_for_each_parameter(df)
+    # compute_avg_for_each_parameter(df)
 
 if __name__ == "__main__":
     main_data_post()

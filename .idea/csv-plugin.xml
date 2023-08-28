@@ -45,7 +45,28 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\new_results\dt\top20_DT_train_size_80_with_stratify_DN_minmax.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\knn\best-knn-macs.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\new_results\knn\best-knn.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\mlp\best-mlp-1.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -60,6 +81,34 @@
           </value>
         </entry>
         <entry key="\new_results\mlp\best-mlp.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\mlp\top20_MLP_train_size_80_with_stratify_DN_minmax.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\mlp\top20_MLP_train_size_80_with_stratify_DN_standard.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\mlp\top_MLP_train_size_80_with_stratify_DN_minmax.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\mlp\top_MLP_train_size_80_with_stratify_DN_standard.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -95,6 +144,13 @@
           </value>
         </entry>
         <entry key="\new_results\qlda\top20_LDA_train_size_80_with_stratify_DN_minmax.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results\svc\best-linear-1.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -186,6 +242,34 @@
           </value>
         </entry>
         <entry key="\new_results_2\knn\top20_KNN_train_size_80_with_stratify_DN_standard.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results_2\mlp\1\metrics_DN_min_max_MLP_train_size_80_with_stratify_25_02_2023_19_50.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results_2\mlp\1\metrics_DN_standard_MLP_train_size_80_with_stratify_25_02_2023_19_50.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results_2\mlp\metrics_DN_standard_MLP_train_size_80_with_stratify_25_04_2023_11_37.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\new_results_2\mlp\metrics_DN_standard_MLP_train_size_80_with_stratify_30_03_2023_17_33.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

@@ -390,5 +390,5 @@ def create_GPC_classifier(row):
     classifier = GaussianProcessClassifier(kernel=params['kernel'], n_restarts_optimizer=params['n_restarts_optimizer'],
                                            max_iter_predict=params['max_iter_predict'],
                                            copy_X_train=params['copy_X_train'],
-                                           multi_class=params['multi_class'], n_jobs=-1)
+                                           multi_class=params['multi_class'], n_jobs=1)
     return classifier
