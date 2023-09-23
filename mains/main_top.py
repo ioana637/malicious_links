@@ -110,7 +110,7 @@ path_to_script = os.path.dirname(os.path.abspath(__file__))
 
 
 # ----------------------------------------MLP----------------------------------------
-df_configs_mlp = pd.read_csv('new_results/mlp/best-mlp-1.csv')
+df_configs_mlp = pd.read_csv('../new_results/mlp/best-mlp-1.csv')
 run_best_configs_mlp(df_configs_mlp, filename='top20_MLP_train_size_80_with_stratify_DN_minmax.csv', path=path_to_script,
                          stratify=True, train_size=0.8, normalize_data=True, scaler='min-max', n_rep=100)
 run_best_configs_mlp(df_configs_mlp, filename='top20_MLP_train_size_80_with_stratify_DN_standard.csv', path=path_to_script,

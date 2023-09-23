@@ -7,8 +7,8 @@ import pandas as pd
 
 from algorithms.ensembles import run_algorithm_ensemble, init_metrics_for_ensembles
 from algorithms.enums import Algorithms
-from data_post import compute_average_metric, compute_roc_auc_score_100
-from utils import appendMetricsTOCSV
+from utils.data_post import compute_average_metric, compute_roc_auc_score_100
+from utils.utils import appendMetricsTOCSV
 
 now = datetime.now()
 dt_string = now.strftime("%d_%m_%Y_%H_%M")
@@ -55,7 +55,7 @@ def init_ens_files(train_size=0.8, scaler='min-max'):
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     filename = 'metrics_DN_' + scaler + '_ENSEMBLE_train_size_' + str(
         int(train_size * 100)) + '_with_stratify_' + dt_string + '.csv'
-    my_filename = os.path.join(path_to_script, 'new_results\\ens', filename)
+    my_filename = os.path.join(path_to_script, '../new_results/ens', filename)
     metrics = init_metrics_for_ensembles()
     metrics_df = pd.DataFrame(metrics)
     metrics_df = compute_average_metric(metrics_df)

@@ -6,9 +6,9 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.neural_network import MLPClassifier
 from sklearn.utils._testing import ignore_warnings
 
-from data_post import compute_average_metric
-from data_pre import load_normalized_dataset, split_data_in_testing_training
-from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
+from utils.data_post import compute_average_metric
+from utils.data_pre import load_normalized_dataset, split_data_in_testing_training
+from utils.utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
 
 
 def run_top_20_MLP_configs(filename='', path='', stratify=False, train_size=0.8,

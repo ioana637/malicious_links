@@ -4,13 +4,12 @@ from random import randint
 
 import numpy as np
 import pandas as pd
-import sklearn
 from sklearn.inspection import permutation_importance
 from sklearn.tree import DecisionTreeClassifier
 
-from data_post import compute_average_metric
-from data_pre import load_normalized_dataset, split_data_in_testing_training
-from utils import cal_metrics, prediction, appendMetricsTOCSV, convert_metrics_to_csv, \
+from utils.data_post import compute_average_metric
+from utils.data_pre import load_normalized_dataset, split_data_in_testing_training
+from utils.utils import cal_metrics, prediction, appendMetricsTOCSV, convert_metrics_to_csv, \
     listener_write_to_file
 import time
 import matplotlib.pyplot as plt

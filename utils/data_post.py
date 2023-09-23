@@ -4,13 +4,12 @@
 # 3. Overall average, min, max
 # 4. For 70 and 80 train size - for each paramater - average (sort parameters values asc)
 # 5. List top 20 configurations based on the average_metric, sort their parameters
-import json
 import os
 
 import pandas as pd
 
 # 1. Load data from result files
-from utils import unique, print_dict
+from utils.utils import unique
 
 
 def load_results_from_file(filename):
@@ -88,10 +87,10 @@ def determine_top_configuration(df, top_k = 20):
 def main_data_post():
     path_to_script = os.path.dirname(os.path.abspath(__file__))
     # my_filename = os.path.join(path_to_script, 'new_results/knn', filename) # for Linux
-    my_filename = os.path.join(path_to_script, 'new_results\\ada',
+    my_filename = os.path.join(path_to_script, '../new_results/ada',
                                'metrics_DN_min_max_ADA_train_size_80_with_stratify_01_05_2023_06_49.csv')
                                 # 'metrics_DN_standard_KNN_train_size_80_with_stratify_13_02_2023_10_03.csv')
-    my_filename_1 = os.path.join(path_to_script, 'new_results\\ada',
+    my_filename_1 = os.path.join(path_to_script, '../new_results/ada',
                                'metrics_DN_standard_ADA_train_size_80_with_stratify_01_05_2023_06_49.csv')
     df1 = load_results_from_file(my_filename)
     df2 = load_results_from_file(my_filename_1)

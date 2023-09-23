@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 
-from data_post import compute_average_metric
-from data_pre import split_data_in_testing_training, load_normalized_dataset
-from utils import prediction, cal_metrics, appendMetricsTOCSV, listener_write_to_file, convert_metrics_to_csv
+from utils.data_post import compute_average_metric
+from utils.data_pre import split_data_in_testing_training, load_normalized_dataset
+from utils.utils import prediction, cal_metrics, appendMetricsTOCSV, listener_write_to_file, convert_metrics_to_csv
 
 
 def create_GNB_classifier(row):

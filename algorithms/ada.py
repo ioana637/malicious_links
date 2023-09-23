@@ -6,14 +6,14 @@ from multiprocessing import Manager, Pool
 import pandas as pd
 from sklearn.ensemble import AdaBoostClassifier
 
-from data_post import compute_average_metric
-from data_pre import split_data_in_testing_training, load_normalized_dataset
+from utils.data_post import compute_average_metric
+from utils.data_pre import split_data_in_testing_training, load_normalized_dataset
 
 warnings.filterwarnings("error")
 
 import numpy as np
 
-from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, \
+from utils.utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, \
     listener_write_to_file
 
 

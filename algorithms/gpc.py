@@ -5,15 +5,15 @@ from multiprocessing import Manager, Pool
 
 import pandas as pd
 
-from data_post import compute_average_metric
-from data_pre import load_normalized_dataset, split_data_in_testing_training
+from utils.data_post import compute_average_metric
+from utils.data_pre import load_normalized_dataset, split_data_in_testing_training
 
 warnings.filterwarnings("error")
 
 from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import ConstantKernel, WhiteKernel, RBF, Matern, RationalQuadratic, DotProduct
+from sklearn.gaussian_process.kernels import DotProduct
 
-from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
+from utils.utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
 
 
 def create_label_for_GPC(kernel, n_restarts_optimizer, max_iter_predict, copy_X_train, multi_class):

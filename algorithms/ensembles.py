@@ -18,9 +18,9 @@ from algorithms.qlda import create_label_LDA_for_row, create_LDA_classifier
 from algorithms.rfc import create_label_for_rfc_for_row, create_RF_classifier
 from algorithms.svm import create_label_SVM_for_row, create_SVM_classifier
 from algorithms.xgb import create_label_for_XGB_for_row, create_XGB_classifier
-from data_post import compute_average_metric, compute_roc_auc_score_100
-from data_pre import split_data_in_testing_training, load_normalized_dataset
-from utils import prediction, appendMetricsTOCSV, cal_metrics_general
+from utils.data_post import compute_average_metric, compute_roc_auc_score_100
+from utils.data_pre import split_data_in_testing_training, load_normalized_dataset
+from utils.utils import prediction, appendMetricsTOCSV, cal_metrics_general
 
 np.set_printoptions(linewidth=100000)
 

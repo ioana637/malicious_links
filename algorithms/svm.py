@@ -12,8 +12,8 @@ from sklearn.svm._libsvm_sparse import ConvergenceWarning
 from sklearn.utils._testing import ignore_warnings
 
 from algorithms.enums import SVM_Kernels
-from data_post import compute_average_metric
-from data_pre import split_data_in_testing_training, load_normalized_dataset
+from utils.data_post import compute_average_metric
+from utils.data_pre import split_data_in_testing_training, load_normalized_dataset
 
 warnings.filterwarnings('ignore', 'Solver terminated early *')
 # warnings.filterwarnings("error")
@@ -21,7 +21,7 @@ if not sys.warnoptions:
     warnings.simplefilter("ignore")
     os.environ["PYTHONWARNINGS"] = "ignore"  # Also affect subprocesses
 
-from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
+from utils.utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
 
 
 def create_SVM_classifier(kernel: SVM_Kernels, row):

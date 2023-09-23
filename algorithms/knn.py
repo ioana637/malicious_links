@@ -6,12 +6,11 @@ import pandas as pd
 from sklearn.model_selection import RepeatedStratifiedKFold, cross_validate
 from sklearn.neighbors import KNeighborsClassifier
 
-from data_post import compute_average_metric
-from data_pre import load_normalized_dataset, split_data_in_testing_training
-from utils import prediction, split_data, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, \
+from utils.data_post import compute_average_metric
+from utils.data_pre import load_normalized_dataset, split_data_in_testing_training
+from utils.utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, \
     listener_write_to_file
 
-import numpy as np
 from itertools import chain
 
 

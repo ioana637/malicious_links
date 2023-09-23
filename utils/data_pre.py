@@ -191,22 +191,22 @@ def split_data_in_testing_training(X, y, stratify = False, train_size = 0.8):
 
 def export_normalized_data(df):
     y, X = normalize_data(df, normalize=True, scaler='min-max')
-    export_dataframe_to_file(y, X, 'data/dataset_norm_min_max.csv')
+    export_dataframe_to_file(y, X, '../data/dataset_norm_min_max.csv')
     y, X = normalize_data(df, normalize=True, scaler='standard')
-    export_dataframe_to_file(y, X, 'data/dataset_norm_standard.csv')
+    export_dataframe_to_file(y, X, '../data/dataset_norm_standard.csv')
     y, X = normalize_data(df, normalize=False, scaler='standard')
-    export_dataframe_to_file(y, X, 'data/dataset_not_norm.csv')
+    export_dataframe_to_file(y, X, '../data/dataset_not_norm.csv')
     # X_train, X_test, y_train, y_test = split_data_in_testing_training(y, X, stratify=True, train_size=0.8)
 
 def load_normalized_dataset(file, normalize = False, scaler = 'min-max'):
     if (file is not None):
         df = pd.read_csv(file)
     if (normalize== False):
-        df = pd.read_csv('data/dataset_not_norm.csv')
+        df = pd.read_csv('../data/dataset_not_norm.csv')
     elif scaler == 'min-max':
-        df = pd.read_csv('data/dataset_norm_min_max.csv')
+        df = pd.read_csv('../data/dataset_norm_min_max.csv')
     else:
-        df = pd.read_csv('data/dataset_norm_standard.csv')
+        df = pd.read_csv('../data/dataset_norm_standard.csv')
 
     # # Split df into X and y
     y = df['Type'].copy()

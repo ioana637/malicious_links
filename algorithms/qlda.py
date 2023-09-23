@@ -5,14 +5,14 @@ from multiprocessing import Manager, Pool
 
 import numpy as np
 import pandas as pd
-from sklearn.covariance import EllipticEnvelope, EmpiricalCovariance, GraphicalLassoCV
+from sklearn.covariance import EmpiricalCovariance
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 
-from data_post import compute_average_metric
-from data_pre import split_data_in_testing_training, load_normalized_dataset
+from utils.data_post import compute_average_metric
+from utils.data_pre import split_data_in_testing_training, load_normalized_dataset
 
 warnings.filterwarnings("error")
-from utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
+from utils.utils import prediction, cal_metrics, appendMetricsTOCSV, convert_metrics_to_csv, listener_write_to_file
 
 
 def prepare_LDA_params(row):
