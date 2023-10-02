@@ -6,9 +6,12 @@ import pandas as pd
 from sklearn import preprocessing
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import precision_score, recall_score, f1_score, roc_curve, roc_auc_score
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_curve, roc_auc_score, classification_report, \
+    matthews_corrcoef
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+
+import time
 
 
 def convert_metrics_to_csv(separator=',', *args):
@@ -203,6 +206,48 @@ def print_dict(dictionary):
     for k, v in dictionary.items():
         print(k, '->', v)
 
+def current_ms() -> int:
+    """
+    Reports the current time in milliseconds
+    :return: long int
+    """
+    return round(time.time() * 1000)
+
+
+def preprocess_y_df(y_train_df, y_test_df):
+    if isinstance(y_train_df, pd.DataFrame):
+        y_train_df = y_train_df.astype('int')
+        y_train = y_train_df.to_numpy().ravel()
+    if isinstance(y_test_df, pd.DataFrame):
+        y_test_df = y_test_df.astype('int')
+        y_test = y_test_df.to_numpy().ravel()
+    return y_train, y_test
+
+def compute_statistics(start_ms, y_pred, y):
+    running_time = (current_ms() - start_ms)
+    report = classification_report(y, y_pred, target_names=['0', '1'], digits=4, output_dict=True)
+    mcc = matthews_corrcoef(y_pred, y)
+    return running_time, report, mcc
+
+
+def init_results_df():
+    df_results = pd.DataFrame(columns=['algorithm', 'features', 'training_time', 'testing_time', 'best_estimator',
+
+                                       'train_accuracy', 'train_precision_0', 'train_precision_1', 'train_recall_0',
+                                       'train_recall_1', 'train_f1_0', 'train_f1_1', 'train_mcc',
+                                       'train_support_0', 'train_support_1', 'train_support',
+                                       'train_macro_avg_precision', 'train_macro_avg_recall', 'train_macro_avg_f1',
+                                       'train_weighted_avg_precision', 'train_weighted_avg_recall',
+                                       'train_weighted_avg_f1',
+
+                                       'test_accuracy', 'test_precision_0', 'test_precision_1', 'test_recall_0',
+                                       'test_recall_1', 'test_f1_0', 'test_f1_1', 'test_mcc',
+                                       'test_support_0', 'test_support_1', 'test_support',
+                                       'test_macro_avg_precision', 'test_macro_avg_recall', 'test_macro_avg_f1',
+                                       'test_weighted_avg_precision', 'test_weighted_avg_recall',
+                                       'test_weighted_avg_f1',
+                                       ])
+    return df_results
 
 def appendMetricsTOCSV(filename, metrics, init_function, header=False, ):
     df = pd.DataFrame(metrics)

@@ -1,0 +1,200 @@
+
+
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.model_selection import train_test_split
+
+from algs_pakhare import train_individual_models
+from utils.tokenizer import tokenizer
+from utils.utils import init_results_df, appendMetricsTOCSV
+
+def load_dataset_alsaedi():
+    file="data/Database2_binary.csv"
+    df = pd.read_csv(file)
+    # count
+    print("Good samples:" + str(df.groupby('Class').size()['good']))
+    print("Bad samples:" + str(df.groupby('Class').size()['bad']))
+    print(df.info(verbose=False))
+    # check for null values
+    bool_series = pd.isnull(df["URLs"])
+    df = df.dropna(how='any',axis=0)
+    print(df[bool_series])
+    return df
+
+def load_dataset_alsaedi_and_binary_classes():
+    # labels: benign, defacement, malware, phishing
+    # headers: url, type columns
+    file="data/Database2.csv"
+    df = pd.read_csv(file)
+    # count
+    print("Benign samples:" + str(df.groupby('type').size()['benign']))
+    print("Malware samples:" + str(df.groupby('type').size()['malware']))
+    print("Phishing samples:" + str(df.groupby('type').size()['phishing']))
+    print("Defacement samples:" + str(df.groupby('type').size()['defacement']))
+    print(df.info(verbose=False))
+    df.loc[(df['type'] == 'malware') | (df['type'] == 'defacement' )| (df['type']== 'phishing'), 'type'] = 'bad'
+    df.loc[df['type'] == 'benign', 'type'] = 'good'
+    df.rename(columns = {'type':'Class'}, inplace = True)
+    df.rename(columns = {'url':'URLs'}, inplace = True)
+    print(df)
+    print(df.info(verbose=False))
+    print("Good samples:" + str(df.groupby('Class').size()['good']))
+    print("Bad samples:" + str(df.groupby('Class').size()['bad']))
+    # check for null values
+    bool_series = pd.isnull(df["URLs"])
+    print(df[bool_series])
+    df.to_csv('data/Database2_binary.csv', index=False)
+    return df
+
+def load_dataset_pakhare():
+    file="data/pakhare_urls.csv"
+    df = pd.read_csv(file)
+    # count
+    print("Good samples:" + str(df.groupby('Class').size()['good']))
+    print("Bad samples:" + str(df.groupby('Class').size()['bad']))
+    print(df.info(verbose=False))
+    # check for null values
+    bool_series = pd.isnull(df["URLs"])
+    print(df[bool_series])
+    return df
+
+# Transform URLs into TFIDFs
+# Return DataFrame with TFIDFs
+def compute_TFIDFs_for_URLs(X_train_df, X_test_df):
+    print("- Training Count Vectorizer -")
+    cVec = CountVectorizer(tokenizer=tokenizer, n_gram_range = (2, 3))
+    count_X_train = cVec.fit_transform(X_train_df['URLs'])
+
+    print("- Training TF-IDF Vectorizer -")
+    tVec = TfidfVectorizer(tokenizer=tokenizer)
+    tfidf_X_train = tVec.fit_transform(X_train_df['URLs'])
+
+    # use transform method, because the vectorizers should be trained on the training set
+    count_X_test = cVec.transform(X_test_df['URLs'])
+    tfidf_X_test = tVec.transform(X_test_df['URLs'])
+
+    return count_X_train, tfidf_X_train, count_X_test, tfidf_X_test
+
+
+
+def split_data_into_training_testing(df, testing_ratio = 0.3, shuffle = True):
+    X = pd.DataFrame()
+    X.loc[:, 'URLs'] = df.loc[:, 'URLs']
+    y=pd.DataFrame()
+    y.loc[:, 'Class'] = df.loc[:, 'Class']
+    X_train_df, X_test_df, y_train_df, y_test_df = train_test_split(X, y, test_size=testing_ratio, random_state=37,
+                                                                    stratify=y, shuffle=shuffle)
+    print('Split done')
+    # print('Training samples: ' + str(X_train_df.size) )
+    # print('Training samples - malicious: ' + str(y_train_df.groupby('Class').size()[1]) )
+    # print('Training samples - legitimate: ' + str(y_train_df.groupby('Class').size()[0]) )
+    # print('Testing samples: ' + str(X_test_df.size) )
+    # print('Testing samples - malicious: ' + str(y_test_df.groupby('Class').size()[1]) )
+    # print('Testing samples - legitimate: ' + str(y_test_df.groupby('Class').size()[0]) )
+
+    # Graph counts of each class, for both training and testing
+    # count_train_classes = pd.value_counts(y_train_df['Class'])
+    # count_train_classes.plot(kind='bar', fontsize=12)
+    # plt.title("Class Count (Training)", fontsize=16)
+    # plt.xticks(rotation='horizontal')
+    # plt.xlabel("Class", fontsize=16)
+    # plt.ylabel("Class Count", fontsize=16)
+    #
+    # plt.show()
+
+    # count_test_classes = pd.value_counts(y_test_df['Class'])
+    # count_test_classes.plot(kind='bar', fontsize=12, colormap='ocean')
+    # plt.title("Class Count (Testing)", fontsize=16)
+    # plt.xticks(rotation='horizontal')
+    # plt.xlabel("Class", fontsize=16)
+    # plt.ylabel("Class Count", fontsize=16)
+    #
+    # plt.show()
+
+    return X_train_df, X_test_df, y_train_df, y_test_df
+
+
+
+# def generate_report_for_classification(cmatrix, score, creport):
+#     """Generates and displays graphical reports
+#     Keyword arguments:
+#       cmatrix - Confusion matrix generated by the model
+#       score --- Score generated by the model
+#       creport - Classification Report generated by the model
+#
+#     :Returns -- N/A
+#     """
+#
+#     # Generate confusion matrix heatmap
+#     plt.figure(figsize=(5,5))
+#     sns.heatmap(cmatrix,
+#                 annot=True,
+#                 fmt="d",
+#                 linewidths=.5,
+#                 square = True,
+#                 cmap = 'Blues',
+#                 annot_kws={"size": 16},
+#                 xticklabels=['bad', 'good'],
+#                 yticklabels=['bad', 'good'])
+#
+#     plt.xticks(rotation='horizontal', fontsize=16)
+#     plt.yticks(rotation='horizontal', fontsize=16)
+#     plt.xlabel('Actual Label', size=20)
+#     plt.ylabel('Predicted Label', size=20)
+#
+#     title = 'Accuracy Score: {0:.4f}'.format(score)
+#     plt.title(title, size = 20)
+#
+#     # Display classification report and confusion matrix
+#     print(creport)
+#     plt.show()
+
+
+def binarize_label(df):
+    # 0 for legitimate URLs
+    # 1 for malicious URLs
+
+    df.loc[df["Class"] == "good", "Class"] = 0
+    df.loc[df["Class"] == "bad", "Class"] = 1
+    return df
+
+
+def balance_dataset(df):
+    df_good = df.loc[df["Class"] == 0]
+    df_bad = df.loc[df["Class"] == 1]
+    df_bad_size = df_bad.shape[0]
+    df_good_selected = df_good.sample(n=df_bad_size)
+    return df_bad.append(df_good_selected)
+
+
+def run_individual_algs_for_pakhare():
+    filename = 'resurse/out_algs_1.csv'
+    df_results = init_results_df()
+    appendMetricsTOCSV(filename, df_results, init_function=init_results_df, header=True)
+    df = load_dataset_pakhare()
+    df = binarize_label(df)
+    df = balance_dataset(df)
+    X_train_df, X_test_df, y_train_df, y_test_df = split_data_into_training_testing(df, testing_ratio = 0.25)
+    train_individual_models(df_results, filename, X_train_df, X_test_df, y_train_df, y_test_df)
+
+
+def randomly_select(no:int, df):
+    df_good = df.loc[df["Class"] == 0]
+    df_bad = df.loc[df["Class"] == 1]
+    df_bad = df_bad.sample(n = no)
+    df_good = df_good.sample(n=no)
+    return df_bad.append(df_good)
+
+
+if __name__ == "__main__":
+    filename = 'out_algs_D2_without_balance.csv'
+    df_results = init_results_df()
+    appendMetricsTOCSV(filename, df_results, init_function=init_results_df, header=True)
+    df = load_dataset_alsaedi()
+    df = binarize_label(df)
+    # df = balance_dataset(df)
+    # df = randomly_select(no = 20000, df = df)
+    print("Good samples:" + str(df.groupby('Class').size()[0]))
+    print("Bad samples:" + str(df.groupby('Class').size()[1]))
+    X_train_df, X_test_df, y_train_df, y_test_df = split_data_into_training_testing(df, testing_ratio = 0.25)
+    train_individual_models(df_results, filename, X_train_df, X_test_df, y_train_df, y_test_df)
