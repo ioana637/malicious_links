@@ -19,16 +19,16 @@ from utils.wrapper import WrapperForPAC, WrapperForLinearSVC
 
 
 class EnsembleStrategy(enum.Enum):
-    voting_hard = 'voting_hard',
-    voting_soft = 'voting_soft',
-    weight_voting_hard = 'weight_voting_hard',
+    voting_hard = 'voting_hard'
+    voting_soft = 'voting_soft'
+    weight_voting_hard = 'weight_voting_hard'
     weight_voting_soft = 'weight_voting_soft'
 
 
 class PSOOptionsStrategy(enum.Enum):
-    exp_decay = 'exp_decay',
-    nonlin_mod = 'nonlin_mod',
-    lin_variation = 'lin_variation',
+    exp_decay = 'exp_decay'
+    nonlin_mod = 'nonlin_mod'
+    lin_variation = 'lin_variation'
 
 
 def init_results_df_ens():
@@ -104,8 +104,16 @@ def get_weights_with_PSO(tfidf_X_train, y_train, ensemble, ens_strategy, n_proce
                                                                                  stratify=y_train, shuffle=True)
 
     # options = {'c1': 0.8, 'c2': 0.6, 'w': 0.9}
-    options = {'c1': round(random.uniform(0.5, 0.99),3), 'c2': round(random.uniform(0.5, 0.99),3),
-               'w': round(random.uniform(0.5, 0.99),3)}
+
+    # options obtained for Pakhare dataset
+    options = {'c1': 0.739, 'c2': 0.829, 'w': 0.815}
+    # options = {'c1': round(random.uniform(0.531, 0.987), 3),
+    #            'c2': round(random.uniform(0.69, 0.982), 3),
+    #            'w': round(random.uniform(0.553, 0.984), 3)}
+
+    # options = {'c1': round(random.uniform(0.5, 0.99), 3), 'c2': round(random.uniform(0.5, 0.99), 3),
+    #            'w': round(random.uniform(0.5, 0.99), 3)}
+
     # C1 cognitive parameter
     # C2 social parameter
     # W inertia parameter
@@ -163,7 +171,7 @@ def train_ensemble_with_PSO(df_results, X_train_df, X_test_df, y_train_df, y_tes
     return df_results
 
 
-def create_ensemble(WEIGHTS, ens_strategy, ensemble):
+def create_ensemble(WEIGHTS, ens_strategy: EnsembleStrategy, ensemble):
     if ens_strategy == EnsembleStrategy.voting_hard:
         ens_clf = VotingClassifier(ensemble, voting='hard')
     elif ens_strategy == EnsembleStrategy.voting_soft:
@@ -256,62 +264,73 @@ def run_ensemble_with_PSO(df, filename, no_iterations: int, n_processes_pso):
     for i in range(no_iterations):
         df = balance_dataset(df)
         X_train_df, X_test_df, y_train_df, y_test_df = split_data_into_training_testing(df, testing_ratio=0.25)
-        for w_strategy in PSOOptionsStrategy:
-            for c1_strategy in PSOOptionsStrategy:
-                for c2_strategy in PSOOptionsStrategy:
-                    top3_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC)]
-                    top5_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC), ('bnb', bnb), ('cnb', cnb)]
-                    top7_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC), ('bnb', bnb), ('cnb', cnb),
-                                     ('mnb', mnb), ('lr', lr)]
-                    for ens_strategy in [EnsembleStrategy.weight_voting_soft, EnsembleStrategy.weight_voting_hard]:
-                        df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
-                                                # PSO configuration
-                                                w_strategy=w_strategy.value[0], c1_strategy=c1_strategy.value[0],
-                                                c2_strategy=c2_strategy.value[0], n_iter_pso=n_iter_pso,
-                                                n_particles=n_particles, ensemble=top3_ensemble,
-                                                ens_strategy=ens_strategy.value, n_processes_pso=n_processes_pso)
-                        df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
-                                                # PSO configuration
-                                                w_strategy=w_strategy.value[0], c1_strategy=c1_strategy.value[0],
-                                                c2_strategy=c2_strategy.value[0], n_iter_pso=n_iter_pso,
-                                                n_particles=n_particles, ensemble=top7_ensemble,
-                                                ens_strategy=ens_strategy.value, n_processes_pso=n_processes_pso)
-                        df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
-                                                # PSO configuration
-                                                w_strategy=w_strategy.value[0], c1_strategy=c1_strategy.value[0],
-                                                c2_strategy=c2_strategy.value[0], n_iter_pso=n_iter_pso,
-                                                n_particles=n_particles, ensemble=top5_ensemble,
-                                                ens_strategy=ens_strategy.value, n_processes_pso=n_processes_pso)
-                    appendMetricsTOCSV(filename, df_results_ens, init_function=init_results_df_ens)
-        # df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
-        #                                          # PSO configuration
-        #                                          w_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
-        #                                          c1_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
-        #                                          c2_strategy=PSOOptionsStrategy.nonlin_mod.value[0], n_iter_pso=n_iter_pso,
-        #                                          n_particles=n_particles, ensemble=top3_ensemble,
-        #                                          ens_strategy=EnsembleStrategy.weight_voting_soft,
-        #                                          n_processes_pso=n_processes_pso)
-        # df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
-        #                                          # PSO configuration
-        #                                          w_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
-        #                                          c1_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
-        #                                          c2_strategy=PSOOptionsStrategy.nonlin_mod.value[0], n_iter_pso=n_iter_pso,
-        #                                          n_particles=n_particles, ensemble=top7_ensemble,
-        #                                          ens_strategy=EnsembleStrategy.weight_voting_soft,
-        #                                          n_processes_pso=n_processes_pso)
-        # df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
-        #                                          # PSO configuration
-        #                                          w_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
-        #                                          c1_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
-        #                                          c2_strategy=PSOOptionsStrategy.nonlin_mod.value[0], n_iter_pso=n_iter_pso,
-        #                                          n_particles=n_particles, ensemble=top5_ensemble,
-        #                                          ens_strategy=EnsembleStrategy.weight_voting_soft,
-        #                                          n_processes_pso=n_processes_pso)
-
+        # for w_strategy in PSOOptionsStrategy:
+        #     for c1_strategy in PSOOptionsStrategy:
+        #         for c2_strategy in PSOOptionsStrategy:
+        # for n_iter_pso in [10, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
+        # for n_iter_pso in [10, 100, 300, 500]:
+        for n_iter_pso in [300, 500]:
+            for n_particles in [10, 30, 50, 80, 100]:
+                if n_iter_pso == 300 and n_particles < 80:
+                    continue
+                top3_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC)]
+                top5_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC), ('bnb', bnb), ('cnb', cnb)]
+                top7_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC), ('bnb', bnb), ('cnb', cnb),
+                                 ('mnb', mnb), ('lr', lr)]
+        # for ens_strategy in [EnsembleStrategy.weight_voting_soft, EnsembleStrategy.weight_voting_hard]:
+                df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
+                                                 # PSO configuration
+                                                 w_strategy=PSOOptionsStrategy.exp_decay.value,
+                                                 c1_strategy=PSOOptionsStrategy.lin_variation.value,
+                                                 c2_strategy=PSOOptionsStrategy.nonlin_mod.value, n_iter_pso=n_iter_pso,
+                                                 n_particles=n_particles, ensemble=top3_ensemble,
+                                                 ens_strategy=EnsembleStrategy.weight_voting_hard,
+                                                 n_processes_pso=n_processes_pso)
+                df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
+                                                 # PSO configuration
+                                                 w_strategy=PSOOptionsStrategy.exp_decay.value,
+                                                 c1_strategy=PSOOptionsStrategy.lin_variation.value,
+                                                 c2_strategy=PSOOptionsStrategy.nonlin_mod.value, n_iter_pso=n_iter_pso,
+                                                 n_particles=n_particles, ensemble=top7_ensemble,
+                                                 ens_strategy=EnsembleStrategy.weight_voting_hard,
+                                                 n_processes_pso=n_processes_pso)
+                df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
+                                                 # PSO configuration
+                                                 w_strategy=PSOOptionsStrategy.exp_decay.value,
+                                                 c1_strategy=PSOOptionsStrategy.lin_variation.value,
+                                                 c2_strategy=PSOOptionsStrategy.nonlin_mod.value, n_iter_pso=n_iter_pso,
+                                                 n_particles=n_particles, ensemble=top5_ensemble,
+                                                 ens_strategy=EnsembleStrategy.weight_voting_hard,
+                                                 n_processes_pso=n_processes_pso)
+                appendMetricsTOCSV(filename, df_results_ens, init_function=init_results_df_ens)
+# df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
+#                                          # PSO configuration
+#                                          w_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
+#                                          c1_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
+#                                          c2_strategy=PSOOptionsStrategy.nonlin_mod.value[0], n_iter_pso=n_iter_pso,
+#                                          n_particles=n_particles, ensemble=top3_ensemble,
+#                                          ens_strategy=EnsembleStrategy.weight_voting_soft,
+#                                          n_processes_pso=n_processes_pso)
+# df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
+#                                          # PSO configuration
+#                                          w_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
+#                                          c1_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
+#                                          c2_strategy=PSOOptionsStrategy.nonlin_mod.value[0], n_iter_pso=n_iter_pso,
+#                                          n_particles=n_particles, ensemble=top7_ensemble,
+#                                          ens_strategy=EnsembleStrategy.weight_voting_soft,
+#                                          n_processes_pso=n_processes_pso)
+# df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
+#                                          # PSO configuration
+#                                          w_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
+#                                          c1_strategy=PSOOptionsStrategy.nonlin_mod.value[0],
+#                                          c2_strategy=PSOOptionsStrategy.nonlin_mod.value[0], n_iter_pso=n_iter_pso,
+#                                          n_particles=n_particles, ensemble=top5_ensemble,
+#                                          ens_strategy=EnsembleStrategy.weight_voting_soft,
+#                                          n_processes_pso=n_processes_pso)
 
 
 if __name__ == "__main__":
-    filename = 'out_ens_2.csv'
+    filename = 'out_ens_3.csv'
     df = load_dataset_pakhare()
     df = binarize_label(df)
-    run_ensemble_with_PSO(df, filename, no_iterations=5, n_processes_pso=60)
+    run_ensemble_with_PSO(df, filename, no_iterations=3, n_processes_pso=60)

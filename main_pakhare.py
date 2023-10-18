@@ -187,7 +187,7 @@ def randomly_select(no:int, df):
 
 
 if __name__ == "__main__":
-    filename = 'out_algs_D2_without_balance.csv'
+    filename = 'resurse/out_algs_D2_without_balance.csv'
     df_results = init_results_df()
     appendMetricsTOCSV(filename, df_results, init_function=init_results_df, header=True)
     df = load_dataset_alsaedi()

@@ -381,14 +381,7 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\out_algs.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\out_ens.csv">
+        <entry key="\out_ens_3_test.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
@@ -655,6 +648,13 @@
           </value>
         </entry>
         <entry key="\results\xgb\metrics_DN_standard_XGB_train_size_80_with_stratify_17_04_2023_18_14.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\resurse\out_algs_D2_alsaedi.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
