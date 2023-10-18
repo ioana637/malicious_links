@@ -270,7 +270,7 @@ def run_ensemble_with_PSO(df, filename, no_iterations: int, n_processes_pso):
         # for n_iter_pso in [10, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]:
         # for n_iter_pso in [10, 100, 300, 500]:
         for n_iter_pso in [300, 500]:
-            for n_particles in [10, 30, 50, 80, 100]:
+            for n_particles in [200]:
                 if n_iter_pso == 300 and n_particles < 80:
                     continue
                 top3_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC)]
