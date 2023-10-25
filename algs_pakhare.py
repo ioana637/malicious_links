@@ -357,7 +357,7 @@ def pipeline_for_algorithm_with_search(classifier, df_results, filename, X_train
 
     df_results = add_stats_to_results(df_results, 'tfidf', classifier_name, stats_training,
                                       stats_testing, str(clf.best_params_))
-    appendMetricsTOCSV(filename, df_results, init_function=init_results_df)
+    df_results = appendMetricsTOCSV(filename, df_results, init_function=init_results_df)
 
 
 
@@ -470,7 +470,7 @@ def train_individual_models(df_results, filename, X_train, X_test, y_train, y_te
 
     classifiers = [
         # bernoulliNB , multinomialNB, complementNB, perceptron, pac, sgd, nc, lr, ada, dt, linearSVC,
-        rf  # - on the server
+        sgd  # - on the server
          # svc, xgb, mlp - astea dureaza mult ...
     ]
     for cls in classifiers:

@@ -187,14 +187,17 @@ def randomly_select(no:int, df):
 
 
 if __name__ == "__main__":
-    filename = 'resurse/out_algs_D2_without_balance.csv'
+    # filename = 'resurse/out_algs_D2_alsaedi_sgd_avg.csv'
+    filename = 'resurse/out_algs_D1_sgd_avg.csv'
     df_results = init_results_df()
     appendMetricsTOCSV(filename, df_results, init_function=init_results_df, header=True)
-    df = load_dataset_alsaedi()
+    df = load_dataset_pakhare()
+    # df = load_dataset_alsaedi()
     df = binarize_label(df)
-    # df = balance_dataset(df)
-    # df = randomly_select(no = 20000, df = df)
-    print("Good samples:" + str(df.groupby('Class').size()[0]))
-    print("Bad samples:" + str(df.groupby('Class').size()[1]))
-    X_train_df, X_test_df, y_train_df, y_test_df = split_data_into_training_testing(df, testing_ratio = 0.25)
-    train_individual_models(df_results, filename, X_train_df, X_test_df, y_train_df, y_test_df)
+    for i in range(10):
+        df = balance_dataset(df)
+        # df = randomly_select(no = 20000, df = df)
+        print("Good samples:" + str(df.groupby('Class').size()[0]))
+        print("Bad samples:" + str(df.groupby('Class').size()[1]))
+        X_train_df, X_test_df, y_train_df, y_test_df = split_data_into_training_testing(df, testing_ratio = 0.25)
+        train_individual_models(df_results, filename, X_train_df, X_test_df, y_train_df, y_test_df)
