@@ -127,7 +127,7 @@ parameters_mlp = {
 parameters_sgd = {
     'class_weight': ['balanced'],
     'penalty':['l2', 'l1', 'elasticnet', None],
-    'loss':['hinge', 'modified_huber', 'squared_hinge', 'perceptron', 'squared_error', 'huber',
+    'loss':['hinge', 'modified_huber', 'squared_hinge', 'perceptron', 'huber',
             'epsilon_insensitive', 'squared_epsilon_insensitive'],
     'learning_rate': ['optimal', 'constant', 'invscaling', 'adaptive'],
     'eta0': uniform()
@@ -469,11 +469,9 @@ def train_individual_models(df_results, filename, X_train, X_test, y_train, y_te
     svc = SVC()
 
     classifiers = [
-        # bernoulliNB , multinomialNB, complementNB,
-        # ada,
-        # perceptron, pac, sgd, rf, dt, nc, kmeans, lr,
-        # knn, svc
-         # xgb, mlp - astea dureaza mult ...
+        # bernoulliNB , multinomialNB, complementNB, perceptron, pac, sgd, nc, lr, ada, dt, linearSVC,
+        rf  # - on the server
+         # svc, xgb, mlp - astea dureaza mult ...
     ]
     for cls in classifiers:
         print('Running '+str(cls.__class__.__name__))
