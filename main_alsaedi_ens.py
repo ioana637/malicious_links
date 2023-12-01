@@ -86,10 +86,10 @@ def get_weights_with_PSO(tfidf_X_train, y_train, ensemble, ens_strategy, n_proce
                                                                                  stratify=y_train, shuffle=True)
 
     # results obtained for Alsaedi dataset D2
-    options = {'c1': 0.7904, 'c2': 0.671, 'w': 0.747}
+    # options = {'c1': 0.7904, 'c2': 0.671, 'w': 0.747}
 
-    # options = {'c1': round(random.uniform(0.5, 0.99), 3), 'c2': round(random.uniform(0.5, 0.99), 3),
-    #            'w': round(random.uniform(0.5, 0.99), 3)}
+    options = {'c1': round(random.uniform(0.5, 0.99), 3), 'c2': round(random.uniform(0.5, 0.99), 3),
+               'w': round(random.uniform(0.5, 0.99), 3)}
 
     # C1 cognitive parameter
     # C2 social parameter
@@ -240,52 +240,51 @@ def run_ensemble_with_PSO(df, filename, no_iterations: int, n_processes_pso):
         df = balance_dataset(df)
         df = randomly_select(no=20000, df=df)
         X_train_df, X_test_df, y_train_df, y_test_df = split_data_into_training_testing(df, testing_ratio=0.25)
-        # for w_strategy in PSOOptionsStrategy:
-        w_strategy = PSOOptionsStrategy.exp_decay
-        c1_strategy = PSOOptionsStrategy.exp_decay
-        c2_strategy = PSOOptionsStrategy.lin_variation
-            # if (w_strategy == PSOOptionsStrategy.exp_decay):
-            #     continue
-            # for c1_strategy in PSOOptionsStrategy:
-            #     for c2_strategy in PSOOptionsStrategy:
+        # w_strategy = PSOOptionsStrategy.exp_decay
+        # c1_strategy = PSOOptionsStrategy.exp_decay
+        # c2_strategy = PSOOptionsStrategy.lin_variation
+        # ens_strategy = EnsembleStrategy.weight_voting_soft
+        for w_strategy in PSOOptionsStrategy:
+            for c1_strategy in PSOOptionsStrategy:
+                for c2_strategy in PSOOptionsStrategy:
         # for n_iter_pso in [10, 100, 300, 500]:
         #     for n_particles in [10, 30, 50, 80, 100]:
-        top3_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC)]
-            # top5_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC), ('rf', rf), ('bnb', bnb)]
-            # top7_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC), ('rf', rf), ('bnb', bnb),
-            #                      ('mnb', mnb), ('lr', lr)]
-        ens_strategy = EnsembleStrategy.weight_voting_soft
-                    # for ens_strategy in [EnsembleStrategy.weight_voting_soft, EnsembleStrategy.weight_voting_hard]:
-        df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
+        # top3_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC)]
+                    top5_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC), ('rf', rf), ('bnb', bnb)]
+                    top7_ensemble = [('sgd', sgd), ('pac', pac), ('linearSVC', linearSVC), ('rf', rf), ('bnb', bnb),
+                                 ('mnb', mnb), ('lr', lr)]
+                    for ens_strategy in [EnsembleStrategy.weight_voting_soft, EnsembleStrategy.weight_voting_hard]:
+        # df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
+        #                                          PSO configuration
+        #                                          w_strategy=w_strategy.value,
+        #                                          c1_strategy=c1_strategy.value,
+        #                                          c2_strategy=c2_strategy.value, n_iter_pso=n_iter_pso,
+        #                                          n_particles=n_particles, ensemble=top3_ensemble,
+        #                                          ens_strategy=ens_strategy,
+        #                                          n_processes_pso=n_processes_pso)
+                        df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
                                                  # PSO configuration
                                                  w_strategy=w_strategy.value,
                                                  c1_strategy=c1_strategy.value,
                                                  c2_strategy=c2_strategy.value, n_iter_pso=n_iter_pso,
-                                                 n_particles=n_particles, ensemble=top3_ensemble,
+                                                 n_particles=n_particles, ensemble=top7_ensemble,
                                                  ens_strategy=ens_strategy,
                                                  n_processes_pso=n_processes_pso)
-                    # df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
-                    #                              # PSO configuration
-                    #                              w_strategy=w_strategy.value,
-                    #                              c1_strategy=c1_strategy.value,
-                    #                              c2_strategy=c2_strategy.value, n_iter_pso=n_iter_pso,
-                    #                              n_particles=n_particles, ensemble=top7_ensemble,
-                    #                              ens_strategy=ens_strategy,
-                    #                              n_processes_pso=n_processes_pso)
-                    # df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
-                    #                              # PSO configuration
-                    #                              w_strategy=w_strategy.value,
-                    #                              c1_strategy=c1_strategy.value,
-                    #                              c2_strategy=c2_strategy.value, n_iter_pso=n_iter_pso,
-                    #                              n_particles=n_particles, ensemble=top5_ensemble,
-                    #                              ens_strategy=ens_strategy,
-                    #                              n_processes_pso=n_processes_pso)
-        df_results_ens = appendMetricsTOCSV(filename, df_results_ens, init_function=init_results_df_ens)
+                        df_results_ens = appendMetricsTOCSV(filename, df_results_ens, init_function=init_results_df_ens)
+                        df_results_ens = train_ensemble_with_PSO(df_results_ens, X_train_df, X_test_df, y_train_df, y_test_df,
+                                                 # PSO configuration
+                                                 w_strategy=w_strategy.value,
+                                                 c1_strategy=c1_strategy.value,
+                                                 c2_strategy=c2_strategy.value, n_iter_pso=n_iter_pso,
+                                                 n_particles=n_particles, ensemble=top5_ensemble,
+                                                 ens_strategy=ens_strategy,
+                                                 n_processes_pso=n_processes_pso)
+                        df_results_ens = appendMetricsTOCSV(filename, df_results_ens, init_function=init_results_df_ens)
 
 
 
 if __name__ == "__main__":
-    filename = 'out_ens_alsaedi_final.csv'
+    filename = 'out_ens_alsaedi_top57_faza1.csv'
     df = load_dataset_alsaedi()
     df = binarize_label(df)
-    run_ensemble_with_PSO(df, filename, no_iterations=10, n_processes_pso=60)
+    run_ensemble_with_PSO(df, filename, no_iterations=1, n_processes_pso=60)
