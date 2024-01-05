@@ -2,32 +2,33 @@ import pandas as pd
 from IPython.core.display import display
 
 def stats_for_ens_first_stage():
-    filename1 = 'resurse/out_ens_alsaedi.csv'
-    # filename2 = 'resurse/out_ens_alsaedi_2.csv'
-    # filename3 = 'resurse/out_ens_alsaedi_3.csv'
-    # filename4 = 'resurse/out_ens_alsaedi_4.csv'
-    # filename = 'resurse/out_ens_2_2.csv'
-    # outfile = 'resurse/out_ens_d1_stats_2.csv'
-    outfile = 'resurse/out_ens_d2_stats_faza1_primul_fisier.csv'
+    # filename1 = 'resurse_icaart2024/out_ens_alsaedi.csv'
+    filename1 = 'resurse_icaart2024/out_ens_alsaedi_top57_faza1.csv'
+    filename2 = 'resurse_icaart2024/out_ens_alsaedi_top3_faza1.csv'
+    # filename3 = 'resurse_icaart2024/out_ens_alsaedi_3.csv'
+    # filename4 = 'resurse_icaart2024/out_ens_alsaedi_4.csv'
+    # filename = 'resurse_icaart2024/out_ens_2_2.csv'
+    # outfile = 'resurse_icaart2024/out_ens_d1_stats_2.csv'
+    outfile = 'resurse_icaart2024/out_ens_alsaedi_stats_faza1_top357.csv'
     df1 = pd.read_csv(filename1)
-    # df2 = pd.read_csv(filename2)
+    df2 = pd.read_csv(filename2)
     # df3 = pd.read_csv(filename3)
     # df4 = pd.read_csv(filename4)
-    df = pd.concat([df1])
+    df = pd.concat([df1, df2])
     display(df.to_string())
     df_grouped_by_strategy = df.groupby('strategy').mean()
     df_grouped_by_c1_strategy = df.groupby('c1_strategy').mean()
     df_grouped_by_c2_strategy = df.groupby('c2_strategy').mean()
     df_grouped_by_w_strategy = df.groupby('w_strategy').mean()
     df_grouped_by_estimators = df.groupby('estimators').mean()
-    # df_grouped_by_weights = df.groupby('weights').mean().sort_values(
-    #     ['test_accuracy', 'test_macro_avg_f1', 'test_weighted_avg_f1'], ascending=False).head(10)
-    # df_grouped_by_c1 = df.groupby('c1').mean().sort_values(
-    #     ['test_accuracy', 'test_macro_avg_f1', 'test_weighted_avg_f1'], ascending=False).head(10)
-    # df_grouped_by_c2 = df.groupby('c2').mean().sort_values(
-    #     ['test_accuracy', 'test_macro_avg_f1', 'test_weighted_avg_f1'], ascending=False).head(10)
-    # df_grouped_by_w = df.groupby('w').mean().sort_values(
-    #     ['test_accuracy', 'test_macro_avg_f1', 'test_weighted_avg_f1'], ascending=False).head(10)
+    df_grouped_by_weights = df.groupby('weights').mean().sort_values(
+        ['test_accuracy', 'test_macro_avg_f1', 'test_weighted_avg_f1'], ascending=False).head(10)
+    df_grouped_by_c1 = df.groupby('c1').mean().sort_values(
+        ['test_accuracy', 'test_macro_avg_f1', 'test_weighted_avg_f1'], ascending=False).head(10)
+    df_grouped_by_c2 = df.groupby('c2').mean().sort_values(
+        ['test_accuracy', 'test_macro_avg_f1', 'test_weighted_avg_f1'], ascending=False).head(10)
+    df_grouped_by_w = df.groupby('w').mean().sort_values(
+        ['test_accuracy', 'test_macro_avg_f1', 'test_weighted_avg_f1'], ascending=False).head(10)
 
     display(df_grouped_by_strategy.to_string())
     display(df_grouped_by_c1_strategy.to_string())
@@ -39,13 +40,13 @@ def stats_for_ens_first_stage():
     df_grouped_by_c2_strategy.to_csv(outfile, mode='a')
     df_grouped_by_estimators.to_csv(outfile, mode='a')
     display(df_grouped_by_estimators.to_string())
-    # display(df_grouped_by_weights.to_string())
-    # display(df_grouped_by_c1.to_string())
-    # display(df_grouped_by_c1.reset_index().mean())
-    # display(df_grouped_by_c2.to_string())
-    # display(df_grouped_by_c2.reset_index().mean())
-    # display(df_grouped_by_w.to_string())
-    # display(df_grouped_by_w.reset_index().mean())
+    display(df_grouped_by_weights.to_string())
+    display(df_grouped_by_c1.to_string())
+    display(df_grouped_by_c1.reset_index().mean())
+    display(df_grouped_by_c2.to_string())
+    display(df_grouped_by_c2.reset_index().mean())
+    display(df_grouped_by_w.to_string())
+    display(df_grouped_by_w.reset_index().mean())
 
 
 def prepare_data_for_2_phase_stats():
@@ -91,5 +92,5 @@ def stats_for_ens_second_stage():
     df_grouped_by_estimators.to_csv(outfile, mode='a')
 
 if __name__ == "__main__":
-    stats_for_ens_second_stage()
-    # stats_for_ens_first_stage()
+    # stats_for_ens_second_stage()
+    stats_for_ens_first_stage()
